@@ -2059,12 +2059,17 @@ function resetApp() {
   if (btn) btn.disabled = true;
 }
 
-// ---- BOTONES HEADER ----
-document.getElementById('btn-nuevo').addEventListener('click', resetApp);
-document.getElementById('btn-exportar').addEventListener('click', exportarXLS);
+// ---- INIT (cuando el DOM esté listo) ----
+window.addEventListener('load', function() {
+  renderMovimientosLista();
+  var btnNuevo = document.getElementById('btn-nuevo');
+  var btnExportar = document.getElementById('btn-exportar');
+  if (btnNuevo) btnNuevo.addEventListener('click', resetApp);
+  if (btnExportar) btnExportar.addEventListener('click', exportarXLS);
+  initAutoguardadoConfig();
+});
 
-// ---- INIT ----
-renderMovimientosLista();async function exportXLS() {
+async function exportXLS() {
   const movs = st.movs.length ? st.movs : [getData()];
   const base = movs[0];
 
@@ -3023,12 +3028,15 @@ function resetApp() {
   if (btn) btn.disabled = true;
 }
 
-// ---- BOTONES HEADER ----
-document.getElementById('btn-nuevo').addEventListener('click', resetApp);
-document.getElementById('btn-exportar').addEventListener('click', exportarXLS);
-
-// ---- INIT ----
-renderMovimientosLista();
+// ---- INIT (cuando el DOM esté listo) ----
+window.addEventListener('load', function() {
+  renderMovimientosLista();
+  var btnNuevo = document.getElementById('btn-nuevo');
+  var btnExportar = document.getElementById('btn-exportar');
+  if (btnNuevo) btnNuevo.addEventListener('click', resetApp);
+  if (btnExportar) btnExportar.addEventListener('click', exportarXLS);
+  initAutoguardadoConfig();
+});
 
 // Autoguardado config — se ejecuta cuando el DOM ya está listo
 if (document.readyState === 'loading') {
