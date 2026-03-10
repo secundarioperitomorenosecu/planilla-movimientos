@@ -1,0 +1,3042 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Planilla de Movimientos — DIPREGEP</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+<style>
+/* ============================================================
+   PLANILLA DE MOVIMIENTOS – DIPREGEP
+   Diseño institucional: azul profundo + dorado + tipografía clásica
+   ============================================================ */
+
+:root {
+  --azul: #1a3a5c;
+  --azul-medio: #2c5282;
+  --azul-claro: #ebf2fa;
+  --dorado: #c9a84c;
+  --dorado-claro: #f5efd6;
+  --rojo-alerta: #c53030;
+  --verde-ok: #276749;
+  --gris-borde: #d1d8e0;
+  --gris-fondo: #f4f6f9;
+  --gris-texto: #4a5568;
+  --blanco: #ffffff;
+  --sombra: 0 2px 12px rgba(26,58,92,0.10);
+  --sombra-modal: 0 8px 40px rgba(26,58,92,0.22);
+  --radius: 6px;
+  --font-serif: 'Libre Baskerville', Georgia, serif;
+  --font-sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', monospace;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { font-size: 15px; }
+
+body {
+  font-family: var(--font-sans);
+  background: var(--gris-fondo);
+  color: #2d3748;
+  min-height: 100vh;
+}
+
+/* ---- HEADER ---- */
+.app-header {
+  background: var(--azul);
+  border-bottom: 3px solid var(--dorado);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.18);
+}
+.header-inner {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0.9rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+}
+.header-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+}
+.brand-escudo svg {
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+.brand-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+}
+.brand-province {
+  font-family: var(--font-serif);
+  font-size: 0.82rem;
+  color: var(--dorado);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.brand-dept {
+  font-size: 0.74rem;
+  color: rgba(255,255,255,0.7);
+  font-weight: 300;
+}
+.brand-sub {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.45);
+  font-family: var(--font-mono);
+  letter-spacing: 0.02em;
+}
+.header-actions {
+  display: flex;
+  gap: 0.6rem;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+/* ---- PROGRESS ---- */
+.progress-bar-wrap {
+  background: var(--blanco);
+  border-bottom: 1px solid var(--gris-borde);
+  padding: 0.7rem 2rem 0;
+  position: sticky;
+  top: 72px;
+  z-index: 90;
+}
+.progress-steps {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: flex;
+  gap: 0;
+  position: relative;
+  z-index: 1;
+}
+.step {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0 1.5rem 0.6rem;
+  font-size: 0.8rem;
+  color: #a0aec0;
+  border-bottom: 3px solid transparent;
+  cursor: default;
+  transition: all 0.2s;
+  position: relative;
+}
+.step.active {
+  color: var(--azul);
+  border-bottom-color: var(--azul);
+}
+.step.done {
+  color: var(--verde-ok);
+  border-bottom-color: var(--verde-ok);
+}
+.step-num {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  background: transparent;
+  transition: all 0.2s;
+}
+.step.active .step-num {
+  background: var(--azul);
+  color: white;
+  border-color: var(--azul);
+}
+.step.done .step-num {
+  background: var(--verde-ok);
+  color: white;
+  border-color: var(--verde-ok);
+}
+.step-label { font-weight: 500; }
+.progress-track { display: none; }
+
+/* ---- MAIN ---- */
+.app-main {
+  max-width: 900px;
+  margin: 2rem auto;
+  padding: 0 1.5rem 4rem;
+}
+
+.form-step {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+.form-step.active { display: block; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- STEP HEADER ---- */
+.step-header {
+  margin-bottom: 1.8rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.step-header h2 {
+  font-family: var(--font-serif);
+  font-size: 1.45rem;
+  color: var(--azul);
+  margin-bottom: 0.3rem;
+}
+.step-header p {
+  font-size: 0.88rem;
+  color: var(--gris-texto);
+  line-height: 1.55;
+}
+
+/* ---- FORM GRID ---- */
+.form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.1rem 1.4rem;
+}
+.field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.field-group.span-2 { grid-column: span 2; }
+.field-group.span-3 { grid-column: span 3; }
+.form-grid.cols-3 { grid-template-columns: 1fr 1fr 1fr; }
+
+label {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--azul);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+label .req { color: var(--rojo-alerta); font-weight: 400; }
+
+input, select, textarea {
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radius);
+  padding: 0.55rem 0.75rem;
+  color: #2d3748;
+  background: var(--blanco);
+  transition: border-color 0.18s, box-shadow 0.18s;
+  width: 100%;
+}
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--azul-medio);
+  box-shadow: 0 0 0 3px rgba(44,82,130,0.12);
+}
+input::placeholder { color: #a0aec0; }
+textarea { resize: vertical; min-height: 70px; }
+
+.field-hint {
+  font-size: 0.74rem;
+  color: #718096;
+  line-height: 1.4;
+}
+
+/* ---- BUTTONS ---- */
+.btn-primary {
+  background: var(--azul);
+  color: white;
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.6rem 1.4rem;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.1s;
+}
+.btn-primary:hover:not(:disabled) { background: var(--azul-medio); }
+.btn-primary:active:not(:disabled) { transform: scale(0.97); }
+.btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+
+.btn-secondary {
+  background: transparent;
+  color: rgba(255,255,255,0.85);
+  border: 1.5px solid rgba(255,255,255,0.3);
+  border-radius: var(--radius);
+  padding: 0.5rem 1rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-secondary:hover { border-color: rgba(255,255,255,0.7); color: white; }
+
+.btn-ghost {
+  background: transparent;
+  color: var(--gris-texto);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radius);
+  padding: 0.6rem 1.2rem;
+  font-family: var(--font-sans);
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-ghost:hover { border-color: var(--azul); color: var(--azul); }
+
+.btn-danger {
+  background: transparent;
+  color: var(--rojo-alerta);
+  border: 1.5px solid #feb2b2;
+  border-radius: var(--radius);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-danger:hover { background: #fff5f5; }
+
+.btn-edit-sm {
+  background: var(--azul-claro);
+  color: var(--azul);
+  border: none;
+  border-radius: var(--radius);
+  padding: 0.3rem 0.7rem;
+  font-size: 0.78rem;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn-edit-sm:hover { background: #d4e6f7; }
+
+/* ---- STEP NAV ---- */
+.step-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 2rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--gris-borde);
+}
+
+/* ---- ALERTA PLAZO ---- */
+.alerta-plazo {
+  background: #fff5e6;
+  border: 1.5px solid #f6ad55;
+  border-radius: var(--radius);
+  padding: 0.7rem 1rem;
+  display: flex;
+  gap: 0.6rem;
+  align-items: flex-start;
+  margin: 1rem 0;
+  font-size: 0.85rem;
+  color: #7b341e;
+}
+.alerta-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+
+/* ---- LISTA DE MOVIMIENTOS ---- */
+.movimientos-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+  margin-bottom: 1.2rem;
+  min-height: 80px;
+}
+.lista-vacia {
+  text-align: center;
+  padding: 2.5rem 1rem;
+  color: #a0aec0;
+  border: 2px dashed var(--gris-borde);
+  border-radius: var(--radius);
+}
+.lista-vacia-icon { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
+.lista-vacia p { font-size: 0.88rem; line-height: 1.5; }
+
+.movimiento-card {
+  background: var(--blanco);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radius);
+  padding: 0.9rem 1.1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  box-shadow: var(--sombra);
+  transition: border-color 0.18s;
+}
+.movimiento-card:hover { border-color: var(--azul-medio); }
+.mov-card-left { flex: 1; min-width: 0; }
+.mov-card-top {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  margin-bottom: 0.35rem;
+  flex-wrap: wrap;
+}
+.mov-numero {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: #a0aec0;
+  background: var(--gris-fondo);
+  padding: 0.15rem 0.45rem;
+  border-radius: 3px;
+}
+.mov-tipo-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.18rem 0.55rem;
+  border-radius: 20px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.badge-alta { background: #e6f4ea; color: #276749; }
+.badge-baja { background: #fde8e8; color: #9b1c1c; }
+.badge-modificacion { background: #e8f0fe; color: #1a56db; }
+.badge-asignacion { background: var(--dorado-claro); color: #7b5e00; }
+
+.mov-area-badge {
+  font-size: 0.68rem;
+  font-weight: 500;
+  padding: 0.12rem 0.45rem;
+  border-radius: 20px;
+}
+.area-liquidaciones { background: #e6f4e6; color: #276749; }
+.area-enfermedades { background: #e8f0fe; color: #1a56db; }
+.area-asignaciones { background: #fde8e8; color: #9b1c1c; }
+.area-coordinacion { background: #f0f0f0; color: #333; }
+
+.mov-docente {
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: #2d3748;
+  margin-bottom: 0.15rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.mov-detalle {
+  font-size: 0.8rem;
+  color: var(--gris-texto);
+  line-height: 1.4;
+}
+.mov-obs {
+  font-size: 0.78rem;
+  color: #718096;
+  font-style: italic;
+  margin-top: 0.3rem;
+  border-left: 3px solid var(--gris-borde);
+  padding-left: 0.6rem;
+}
+.mov-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.btn-agregar {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: var(--azul-claro);
+  color: var(--azul);
+  border: 2px dashed var(--azul-medio);
+  border-radius: var(--radius);
+  padding: 0.7rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  width: 100%;
+  justify-content: center;
+  transition: all 0.18s;
+  margin-bottom: 1rem;
+}
+.btn-agregar:hover {
+  background: #d4e6f7;
+  border-color: var(--azul);
+}
+
+/* ---- MODAL ---- */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(10,20,40,0.55);
+  z-index: 500;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 2rem 1rem;
+  overflow-y: auto;
+  backdrop-filter: blur(2px);
+}
+.modal-overlay.open { display: flex; }
+.modal-box {
+  background: var(--blanco);
+  border-radius: 10px;
+  box-shadow: var(--sombra-modal);
+  width: 100%;
+  max-width: 680px;
+  margin: auto;
+  animation: modalIn 0.22s ease;
+}
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.1rem 1.4rem;
+  border-bottom: 1px solid var(--gris-borde);
+  background: var(--azul);
+  border-radius: 10px 10px 0 0;
+}
+.modal-header h3 {
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: white;
+}
+.modal-close {
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.7);
+  font-size: 1.1rem;
+  cursor: pointer;
+  padding: 0.2rem 0.4rem;
+  border-radius: 4px;
+  transition: color 0.15s;
+}
+.modal-close:hover { color: white; }
+.modal-body {
+  padding: 1.4rem;
+}
+
+/* ---- MODAL: SELECTOR TIPO ---- */
+.tipo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+.tipo-card {
+  border: 2px solid var(--gris-borde);
+  border-radius: var(--radius);
+  padding: 1.1rem;
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: left;
+}
+.tipo-card:hover {
+  border-color: var(--azul);
+  background: var(--azul-claro);
+}
+.tipo-card.selected {
+  border-color: var(--azul);
+  background: var(--azul-claro);
+}
+.tipo-card-icon { font-size: 1.5rem; display: block; margin-bottom: 0.4rem; }
+.tipo-card-titulo {
+  font-weight: 700;
+  font-size: 0.9rem;
+  color: var(--azul);
+  margin-bottom: 0.2rem;
+}
+.tipo-card-desc {
+  font-size: 0.75rem;
+  color: var(--gris-texto);
+  line-height: 1.4;
+}
+
+/* ---- MODAL: SUBTIPO ---- */
+.subtipo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-height: 320px;
+  overflow-y: auto;
+}
+.subtipo-item {
+  border: 1.5px solid var(--gris-borde);
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+}
+.subtipo-item:hover {
+  border-color: var(--azul-medio);
+  background: var(--azul-claro);
+}
+.subtipo-item.selected {
+  border-color: var(--azul);
+  background: var(--azul-claro);
+}
+.subtipo-num {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: #a0aec0;
+}
+.subtipo-titulo {
+  font-weight: 600;
+  font-size: 0.87rem;
+  color: #2d3748;
+}
+.subtipo-area {
+  font-size: 0.72rem;
+  color: var(--gris-texto);
+}
+
+/* ---- MODAL: FORMULARIO CAMPOS ---- */
+.modal-section {
+  margin-bottom: 1.2rem;
+}
+.modal-section-title {
+  font-family: var(--font-serif);
+  font-size: 0.85rem;
+  color: var(--azul);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.7rem;
+  padding-bottom: 0.3rem;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.obs-preview {
+  background: var(--dorado-claro);
+  border: 1px solid #d4a84c;
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.83rem;
+  color: #5a3e00;
+  font-family: var(--font-mono);
+  line-height: 1.5;
+  margin-top: 0.5rem;
+}
+.obs-preview-label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #7b5e00;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  margin-bottom: 0.25rem;
+  display: block;
+}
+
+/* ---- RESUMEN (STEP 4) ---- */
+.resumen-card {
+  background: var(--blanco);
+  border: 1.5px solid var(--gris-borde);
+  border-radius: 8px;
+  margin-bottom: 1.2rem;
+  overflow: hidden;
+  box-shadow: var(--sombra);
+}
+.resumen-card-header {
+  background: var(--azul-claro);
+  padding: 0.7rem 1.1rem;
+  font-family: var(--font-serif);
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--azul);
+  letter-spacing: 0.02em;
+  border-bottom: 1px solid var(--gris-borde);
+}
+.resumen-card-body {
+  padding: 0.9rem 1.1rem;
+}
+.resumen-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.3rem 0;
+  border-bottom: 1px solid var(--gris-fondo);
+  font-size: 0.85rem;
+  gap: 1rem;
+}
+.resumen-row:last-child { border-bottom: none; }
+.resumen-label { color: var(--gris-texto); flex-shrink: 0; }
+.resumen-val { font-weight: 600; text-align: right; }
+
+.resumen-movimientos-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.resumen-movimientos-table th {
+  background: var(--azul);
+  color: white;
+  text-align: left;
+  padding: 0.5rem 0.7rem;
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.resumen-movimientos-table td {
+  padding: 0.5rem 0.7rem;
+  border-bottom: 1px solid var(--gris-borde);
+  vertical-align: top;
+}
+.resumen-movimientos-table tr:last-child td { border-bottom: none; }
+.resumen-movimientos-table tr:nth-child(even) td { background: #fafbfc; }
+
+/* ---- EXPORT PANEL ---- */
+.export-panel {
+  background: linear-gradient(135deg, var(--azul) 0%, var(--azul-medio) 100%);
+  border-radius: 8px;
+  padding: 1.8rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 20px rgba(26,58,92,0.25);
+}
+.export-info h3 {
+  font-family: var(--font-serif);
+  font-size: 1.1rem;
+  color: white;
+  margin-bottom: 0.4rem;
+}
+.export-info p {
+  font-size: 0.83rem;
+  color: rgba(255,255,255,0.75);
+  line-height: 1.5;
+  max-width: 420px;
+}
+.btn-export-big {
+  background: var(--dorado);
+  color: var(--azul);
+  border: none;
+  border-radius: 6px;
+  padding: 0.9rem 1.8rem;
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  flex-shrink: 0;
+  transition: all 0.18s;
+  white-space: nowrap;
+}
+.btn-export-big:hover {
+  background: #e6c45c;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(201,168,76,0.4);
+}
+.export-icon { font-size: 1.4rem; line-height: 1; }
+.export-text { font-size: 0.82rem; }
+
+/* ---- MODAL NAV ---- */
+.modal-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1.2rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--gris-borde);
+}
+
+/* ---- INFO BOX ---- */
+.info-box {
+  background: var(--azul-claro);
+  border: 1px solid #bee3f8;
+  border-radius: var(--radius);
+  padding: 0.7rem 0.9rem;
+  font-size: 0.82rem;
+  color: #2c5282;
+  line-height: 1.5;
+  margin-bottom: 0.8rem;
+}
+.info-box strong { font-weight: 700; }
+
+/* ---- RESPONSIVE ---- */
+@media (max-width: 640px) {
+  .header-inner { padding: 0.7rem 1rem; flex-wrap: wrap; }
+  .brand-dept, .brand-sub { display: none; }
+  .app-main { padding: 0 1rem 3rem; margin-top: 1rem; }
+  .form-grid { grid-template-columns: 1fr; }
+  .field-group.span-2, .field-group.span-3 { grid-column: span 1; }
+  .tipo-grid { grid-template-columns: 1fr; }
+  .export-panel { flex-direction: column; text-align: center; }
+  .progress-steps { gap: 0; }
+  .step-label { display: none; }
+}
+
+/* ── Sync bar ─────────────────────────────────────────────── */
+.sync-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: #f0fdf4;
+  border: 1.5px solid #86efac;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #166534;
+  font-weight: 500;
+}
+.sync-bar.error  { background:#fef2f2; border-color:#fca5a5; color:#991b1b; }
+.sync-bar.saving { background:#eff6ff; border-color:#93c5fd; color:#1e40af; }
+.sync-bar.ok     { background:#f0fdf4; border-color:#86efac; color:#166534; }
+
+/* ── Historial de planillas ───────────────────────────────── */
+.hist-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 6px;
+  background: #fff;
+  font-size: 13px;
+}
+.hist-item:hover { background: #f8fafc; }
+
+/* ── Badge de nivel ───────────────────────────────────────── */
+.badge-nivel {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.03em;
+}
+.badge-inicial    { background:#fef9c3; color:#854d0e; }
+.badge-primario   { background:#dcfce7; color:#166534; }
+.badge-secundario { background:#dbeafe; color:#1e40af; }
+.badge-superior   { background:#f3e8ff; color:#6b21a8; }
+
+</style>
+</head>
+<body>
+
+<header>
+  <div class="hlogo">
+    <div class="hescudo">🏛</div>
+    <div>
+      <div class="htitulo">Planilla de Movimientos — DIPREGEP</div>
+      <div class="hsubtit">Provincia de Buenos Aires · DGCyE</div>
+    </div>
+  </div>
+  <span class="hbadge">v1.0</span>
+</header>
+
+<div class="layout">
+<aside>
+  <div class="sb-titulo">Pasos</div>
+  <div class="paso-item activo" onclick="goTo(1)" id="sb1"><div class="paso-num">1</div>Establecimiento</div>
+  <div class="paso-item" onclick="goTo(2)" id="sb2"><div class="paso-num">2</div>Tipo de movimiento</div>
+  <div class="paso-item" onclick="goTo(3)" id="sb3"><div class="paso-num">3</div>Datos del docente</div>
+  <div class="paso-item" onclick="goTo(4)" id="sb4"><div class="paso-num">4</div>Detalle</div>
+  <div class="paso-item" onclick="goTo(5)" id="sb5"><div class="paso-num">5</div>Observaciones</div>
+  <hr class="sb-div">
+  <div class="paso-item" onclick="goTo(6)" id="sb6"><div class="paso-num">6</div>Revisión y exportar</div>
+</aside>
+
+<main class="main">
+
+<!-- ══ PASO 1 ══ -->
+<section class="seccion visible" id="p1">
+  <div class="sh"><h2>Datos del establecimiento</h2><p>Encabezamiento de la planilla de movimientos.</p></div>
+  <div class="alerta ainfo"><span class="aic">ℹ️</span><div>Fecha límite de ingreso: <strong>5° día hábil del mes siguiente</strong> a la novedad. Ingreso tardío o con errores implica rechazo sin retroactivo.</div></div>
+
+  <div class="card" id="card-sync-status">
+    <div class="sync-bar" id="sync-bar">
+      <span id="sync-icon">&#9729;&#65039;</span>
+      <span id="sync-txt">Conectando con Google Sheets...</span>
+      <span id="sync-user-wrap"> &middot; Usuario: <input id="sync-user" placeholder="Tu nombre" style="border:none;border-bottom:1px solid #aaa;outline:none;font-family:inherit;font-size:13px;width:120px;background:transparent"></span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctit">Nivel educativo y per&iacute;odo</div>
+    <div class="g2">
+      <div class="campo"><label>Nivel <span class="req">*</span></label>
+        <select id="e-nivel" onchange="onNivelChange()">
+          <option value="">&#8212; Seleccionar &#8212;</option>
+          <option value="Inicial">Nivel Inicial</option>
+          <option value="Primario">Nivel Primario</option>
+          <option value="Secundario">Nivel Secundario</option>
+          <option value="Superior">Nivel Superior</option>
+        </select>
+      </div>
+      <div class="campo"><label>Mes / A&ntilde;o de la novedad <span class="req">*</span></label><input type="month" id="e-mes"></div>
+    </div>
+  </div>
+
+  <div class="card" id="card-inst" style="display:none">
+    <div class="ctit">Datos del establecimiento <span style="font-size:12px;font-weight:400;color:#64748b"> &#8212; se guardan autom&aacute;ticamente por nivel</span></div>
+    <div class="g2">
+      <div class="campo s2"><label>Nombre del establecimiento <span class="req">*</span></label><input id="e-nom" placeholder="Ej: Colegio San Mart&iacute;n"></div>
+      <div class="campo"><label>N&deg; DIPREGEP <span class="req">*</span></label><input id="e-num" placeholder="Ej: 1234"></div>
+      <div class="campo"><label>Distrito <span class="req">*</span></label><input id="e-dist" placeholder="Ej: La Plata"></div>
+      <div class="campo"><label>% Subvenci&oacute;n <span class="req">*</span></label>
+        <select id="e-subv">
+          <option value="">&#8212; % &#8212;</option>
+          <option value="100">100%</option>
+          <option value="80">80%</option>
+          <option value="60">60%</option>
+          <option value="40">40%</option>
+        </select>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctit">Autoridad firmante</div>
+    <div class="g2">
+      <div class="campo"><label>Apellido y nombre del director/a <span class="req">*</span></label><input id="d-nom" placeholder="APELLIDO, Nombre"></div>
+      <div class="campo"><label>DNI del director/a</label><input id="d-dni" placeholder="Ej: 28.345.678"></div>
+      <div class="campo s2"><label>Área de destino <span class="req">*</span></label>
+        <div class="ogroup" id="area-grp">
+          <button class="obtn" onclick="selArea(this,'L')" style="border-color:#166534;color:#166534">🟢 Liquidaciones</button>
+          <button class="obtn" onclick="selArea(this,'E')" style="border-color:#1e40af;color:#1e40af">🔵 Licencias por Enfermedad</button>
+          <button class="obtn" onclick="selArea(this,'A')" style="border-color:#991b1b;color:#991b1b">🔴 Asignaciones Familiares</button>
+          <button class="obtn" onclick="selArea(this,'C')" style="border-color:#374151;color:#374151">⚫ Coordinación Adm.</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="bgroup"><button class="btn bp" onclick="goTo(2)">Siguiente →</button></div>
+</section>
+
+<!-- ══ PASO 2 ══ -->
+<section class="seccion" id="p2">
+  <div class="sh"><h2>Tipo de movimiento</h2><p>Seleccioná qué cambio se produce en la situación del docente.</p></div>
+
+  <div class="card">
+    <div class="ctit">¿Qué movimiento es?</div>
+    <div class="tmov-grid">
+      <div class="tmov-card" onclick="selTipo(this,'alta')" id="tc-alta"><div class="ic">➕</div><div class="nm">Alta</div><div class="ds">Nuevo docente o nuevo cargo/categoría</div></div>
+      <div class="tmov-card" onclick="selTipo(this,'baja')" id="tc-baja"><div class="ic">➖</div><div class="nm">Baja</div><div class="ds">Cese en cargo o totalidad de horas</div></div>
+      <div class="tmov-card" onclick="selTipo(this,'modificacion')" id="tc-mod"><div class="ic">✏️</div><div class="nm">Modificación</div><div class="ds">Cambio en situación existente</div></div>
+    </div>
+  </div>
+
+  <div class="card" id="st-alta" style="display:none">
+    <div class="ctit">Subtipo de Alta</div>
+    <div class="campo"><label>Motivo <span class="req">*</span></label>
+      <select id="a-sub" onchange="onAltaSub()">
+        <option value="">— Seleccionar —</option>
+        <optgroup label="→ Coordinación Administrativa"><option value="1">Nuevo aporte estatal</option><option value="2">Crecimiento vegetativo</option></optgroup>
+        <optgroup label="→ Liquidaciones"><option value="3">Continúa igual cargo (era código P año anterior)</option><option value="4">Reemplaza por renuncia</option><option value="5">Reemplaza por despido</option><option value="6">Reemplaza por abandono de cargo</option><option value="7">Reemplaza por fallecimiento</option><option value="8">Reemplaza por pase a DIPREGEP 20</option><option value="28">Alta suplente por licencia</option></optgroup>
+      </select>
+    </div>
+    <div id="warn-coord" class="alerta awarn" style="display:none;margin-top:10px"><span class="aic">⚠️</span><div>Requiere <strong>firma del Inspector refrendada por Inspector/a Jefe</strong>. Destino: Coordinación Administrativa.</div></div>
+  </div>
+
+  <div class="card" id="st-baja" style="display:none">
+    <div class="ctit">Subtipo de Baja</div>
+    <div class="campo"><label>Motivo <span class="req">*</span></label>
+      <select id="b-sub" onchange="st.bSub=this.value">
+        <option value="">— Seleccionar —</option>
+        <option value="23r">Renuncia (con telegrama)</option><option value="23d">Despido (con telegrama)</option><option value="23c">Cierre de curso</option><option value="23o">Otro motivo</option><option value="24">Baja provisorio año anterior</option><option value="30">Fin anticipado de suplencia</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card" id="st-mod" style="display:none">
+    <div class="ctit">Subtipo de Modificación</div>
+    <div class="campo"><label>Tipo <span class="req">*</span></label>
+      <select id="m-sub" onchange="onModSub()">
+        <option value="">— Seleccionar —</option>
+        <optgroup label="Incremento de horas"><option value="9">Incremento por nuevo aporte estatal</option><option value="10">Incremento por crecimiento vegetativo</option><option value="11">Incremento – reemplaza por renuncia</option><option value="12">Incremento – reemplaza por despido</option><option value="13">Incremento – reemplaza por abandono de cargo</option><option value="14">Incremento – reemplaza por fallecimiento</option><option value="15">Incremento – reemplaza por pase a DIPREGEP 20</option></optgroup>
+        <optgroup label="Licencias sin aporte"><option value="16">Inactiva secuencia por licencia sin aporte</option><option value="17">Mantiene inactiva (prórroga)</option><option value="18">Activa por fin de licencia sin aporte</option></optgroup>
+        <optgroup label="Otros cambios"><option value="19">Modifica antigüedad</option><option value="20">Modifica datos personales (DNI/nombre)</option><option value="21">Modifica categoría</option><option value="22">Modifica situación de revista</option><option value="25">Decrecimiento por renuncia parcial</option><option value="26">Decrecimiento por pase parcial a DIPREGEP 20</option><option value="27">Decrecimiento por licencia parcial sin aporte</option><option value="29">Modifica fecha hasta (prórroga suplencia)</option></optgroup>
+      </select>
+    </div>
+    <div id="campo-art" style="display:none;margin-top:10px">
+      <div class="campo"><label>Artículo de la licencia <span class="req">*</span></label><input id="m-art" placeholder="Ej: 114° a.1"></div>
+    </div>
+  </div>
+
+  <div class="bgroup"><button class="btn bs" onclick="goTo(1)">← Anterior</button><button class="btn bp" onclick="goTo(3)">Siguiente →</button></div>
+</section>
+
+<!-- ══ PASO 3 ══ -->
+<section class="seccion" id="p3">
+  <div class="sh"><h2>Datos del docente</h2><p>Columnas 1 al 4 y cargo (5–9) de la planilla oficial.</p></div>
+
+  <div class="card">
+    <div class="ctit">Identificación</div>
+    <div class="g3">
+      <div class="campo s2"><label>Apellido y Nombres <span class="req">*</span> <span class="ncol">Col.1</span></label><input id="dc-nom" placeholder="APELLIDO, Nombres"></div>
+      <div class="campo"><label>DNI <span class="req">*</span> <span class="ncol">Col.2</span></label><input id="dc-dni" placeholder="Ej: 28.345.678"></div>
+      <div class="campo"><label>Cargo/Secuencia <span class="ncol">Col.3</span></label><input id="dc-sec" placeholder="Ej: 005"></div>
+      <div class="campo"><label>Situación de revista <span class="req">*</span> <span class="ncol">Col.4</span></label>
+        <select id="dc-rev"><option value="">—</option><option value="11">11 — Titular</option><option value="P">P — Provisorio</option><option value="21">21 — Suplente</option><option value="31">31 — Suplente/titular maternidad</option></select></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctit">Cargo y categoría <span class="ncol">Cols. 5–9</span></div>
+    <div class="g3">
+      <div class="campo"><label>Categoría <span class="req">*</span> <span class="ncol">Col.5</span></label>
+        <<<<select id="dc-cat">
+          <option value="">— Tipo —</option>
+<optgroup label="── Nivel Inicial ──">
+  <option value="D">D — Director/a</option>
+  <option value="VD">VD — Vicedirector/a</option>
+  <option value="MS">MS — Maestro/a Secretario/a</option>
+  <option value="MI">MI — Maestro/a de Infantes</option>
+  <option value="PR">PR — Preceptor/a</option>
+  <option value="MEA">MEA — Maestro/a Ed. Artística</option>
+  <option value="EF">EF — Ed. Física</option>
+  <option value="BM">BM — Módulos</option>
+</optgroup>
+<optgroup label="── Nivel Primario ──">
+  <option value="D">D — Director/a</option>
+  <option value="VD">VD — Vicedirector/a</option>
+  <option value="MS">MS — Maestro/a Secretario/a</option>
+  <option value="PS">PS — Prosecretario/a</option>
+  <option value="MA">MA — Maestro/a de Grado</option>
+  <option value="PR">PR — Preceptor/a</option>
+  <option value="MEA">MEA — Maestro/a Ed. Artística</option>
+  <option value="EF">EF — Ed. Física</option>
+  <option value="MK">MK — Inglés (primario)</option>
+  <option value="B2">B2 — Inglés 2° ciclo (por curso)</option>
+  <option value="B1">B1 — Doble escolaridad (por curso)</option>
+  <option value="BM">BM — Módulos</option>
+</optgroup>
+<optgroup label="── Nivel Secundario ──">
+  <option value="D">D — Director/a</option>
+  <option value="VD">VD — Vicedirector/a</option>
+  <option value="SV">SV — Secretario/a</option>
+  <option value="PSV">PSV — Prosecretario/a</option>
+  <option value="JP">JP — Jefe/a de Preceptores</option>
+  <option value="PR">PR — Preceptor/a</option>
+  <option value="DS">DS — Docente Secundario (hs cátedra)</option>
+  <option value="PH">PH — Profesor/a hora cátedra</option>
+  <option value="PT">PT — Profesor/a técnico/a</option>
+  <option value="PF">PF — Profesor/a (módulos)</option>
+  <option value="JA">JA — Jefe/a de Área</option>
+  <option value="TP">TP — Prof. Trabajos Prácticos / Taller</option>
+  <option value="JL">JL — Jefe de Laboratorio</option>
+</optgroup>
+<optgroup label="── Nivel Superior ──">
+  <option value="D">D — Director/a</option>
+  <option value="VD">VD — Vicedirector/a</option>
+  <option value="SV">SV — Secretario/a</option>
+  <option value="PR">PR — Preceptor/a</option>
+  <option value="PSU">PSU — Profesor/a hora cátedra superior</option>
+  <option value="MSU">MSU — Módulos (superior)</option>
+</optgroup>
+<optgroup label="── Otros ──">
+  <option value="AS">AS — Auxiliar / Administrativo</option>
+  <option value="OT">OT — Otro</option>
+</optgroup>
+        </select></div>
+      <div class="campo"><label>Curso/Sección <span class="ncol">Col.6</span></label><input id="dc-cur" placeholder="Ej: 3° A"></div>
+      <div class="campo"><label>Turno <span class="ncol">Col.7</span></label>
+        <select id="dc-tur"><option value="">—</option><option value="M">M — Mañana</option><option value="T">T — Tarde</option><option value="N">N — Noche</option><option value="C">C — Completo</option><option value="V">V — Vespertino</option></select></div>
+      <div class="campo s2"><label>Materia / Espacio curricular <span class="ncol">Col.8</span></label><input id="dc-mat" placeholder="Ej: Matemática"></div>
+      <div class="campo"><label>Horas/módulos <span class="ncol">Col.9</span></label><input type="number" id="dc-hs" placeholder="Ej: 15" min="1"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="ctit">Horas totales y antigüedad</div>
+    <div class="alerta ainfo" style="margin-bottom:12px"><span class="aic">ℹ️</span><div>La antigüedad se vuelca al <strong>30 del mes</strong> en que se produce la novedad.</div></div>
+    <div class="g3">
+      <div class="campo"><label>Horas totales post-movimiento <span class="ncol">Col.11</span></label><input type="number" id="dc-hst" placeholder="Total en secuencia" min="1"></div>
+      <div class="campo"><label>Antigüedad — años <span class="ncol">Col.12</span></label><input type="number" id="dc-aa" placeholder="Ej: 7" min="0"></div>
+      <div class="campo"><label>Antigüedad — meses <span class="ncol">Col.13</span></label><input type="number" id="dc-am" placeholder="0–11" min="0" max="11"></div>
+    </div>
+  </div>
+
+  <div class="bgroup"><button class="btn bs" onclick="goTo(2)">← Anterior</button><button class="btn bp" onclick="goTo(4)">Siguiente →</button></div>
+</section>
+
+<!-- ══ PASO 4 ══ -->
+<section class="seccion" id="p4">
+  <div class="sh"><h2>Detalle del movimiento</h2><p>Fechas y datos adicionales según tipo.</p></div>
+
+  <div class="card">
+    <div class="ctit">Fechas <span class="ncol">Col.10</span></div>
+    <div class="g2">
+      <div class="campo"><label>Fecha desde <span class="req">*</span></label><input type="date" id="mv-de"></div>
+      <div class="campo"><label>Fecha hasta</label><input type="date" id="mv-hs"></div>
+    </div>
+  </div>
+
+  <div class="card" id="card-reem" style="display:none">
+    <div class="ctit">Docente reemplazado/titular en licencia</div>
+    <div class="g3">
+      <div class="campo s2"><label>Apellido y nombre <span class="req">*</span></label><input id="r-nom" placeholder="APELLIDO, Nombre"></div>
+      <div class="campo"><label>DNI <span class="req">*</span></label><input id="r-dni" placeholder="Ej: 25.678.901"></div>
+      <div class="campo"><label>N° Secuencia <span class="req">*</span></label><input id="r-sec" placeholder="Ej: 002"></div>
+      <div class="campo"><label>Artículo licencia / Telegrama N°</label><input id="r-tel" placeholder="Ej: 12345678 / Art. 114°a.1"></div>
+    </div>
+  </div>
+
+  <div class="card" id="card-sup" style="display:none">
+    <div class="ctit">Documentación adjunta (suplente)</div>
+    <div class="campo"><label>Documentos que se acompañan</label><input id="s-doc" placeholder="Ej: Certificado médico, resolución..."></div>
+  </div>
+
+  <div class="bgroup"><button class="btn bs" onclick="goTo(3)">← Anterior</button><button class="btn bp" onclick="goTo(5)">Siguiente →</button></div>
+</section>
+
+<!-- ══ PASO 5 ══ -->
+<section class="seccion" id="p5">
+  <div class="sh"><h2>Observaciones</h2><p>Texto estandarizado según Anexo I — Disposición 1000/DIPREGEP.</p></div>
+
+  <div class="card">
+    <div class="ctit">Área de destino</div>
+    <div id="area-disp" class="darea dl">🟢 Liquidaciones</div>
+  </div>
+
+  <div class="card">
+    <div class="ctit">Observaciones <span class="ncol">Col. Obs.</span></div>
+    <div id="obs-sug-cont"></div>
+    <div class="campo" style="margin-top:8px">
+      <label>Texto de observaciones <span class="req">*</span></label>
+      <textarea id="obs" rows="4" placeholder="Se genera automáticamente al seleccionar el tipo de movimiento..."></textarea>
+    </div>
+    <div id="alerta-firma" class="alerta awarn" style="display:none;margin-top:10px"><span class="aic">⚠️</span><div id="af-txt"></div></div>
+  </div>
+
+  <div class="bgroup"><button class="btn bs" onclick="goTo(4)">← Anterior</button><button class="btn bp" onclick="goTo(6)">Ver resumen →</button></div>
+</section>
+
+<!-- ══ PASO 6 ══ -->
+<section class="seccion" id="p6">
+  <div class="sh"><h2>Revisión y exportación</h2><p>Verificá los datos antes de generar el archivo XLS oficial.</p></div>
+
+  <div id="resumen-cont"></div>
+
+  <div class="card">
+    <div class="ctit">Exportar</div>
+    <div class="alerta aok"><span class="aic">✅</span><div>El XLS generado replica la estructura oficial de la Planilla de Movimientos DIPREGEP. Imprimí y firmá el formulario.</div></div>
+    <div class="bgroup">
+      <button class="btn bv" onclick="exportXLS()">⬇ Descargar Planilla XLS</button>
+      <button class="btn bs" onclick="nuevoMov()">+ Agregar otro movimiento</button>
+    </div>
+  </div>
+
+  <div class="card" id="lista-mov" style="display:none">
+    <div class="ctit">Movimientos en esta planilla</div>
+    <table class="tmov"><thead><tr><th>#</th><th>Docente</th><th>DNI</th><th>Tipo</th><th>Desde</th><th>Área</th><th></th></tr></thead>
+    <tbody id="tmov-body"></tbody></table>
+  </div>
+
+  <div class="bgroup"><button class="btn bs" onclick="goTo(5)">← Anterior</button></div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ============================================================
+// app.js — Lógica principal de la webapp
+// Planilla de Movimientos DIPREGEP
+// ============================================================
+
+// ============================================================
+// INTEGRACIÓN GOOGLE APPS SCRIPT
+// Reemplazar GAS_URL con la URL de tu script desplegado
+// ============================================================
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec";
+const GAS_CLAVE = "dipregep2025"; // igual que en Codigo.gs
+
+// ── Estado de sincronización ──────────────────────────────────────────────────
+function setSyncStatus(tipo, texto) {
+  const bar = document.getElementById("sync-bar");
+  const icon = document.getElementById("sync-icon");
+  const txt  = document.getElementById("sync-txt");
+  if (!bar) return;
+  bar.className = "sync-bar " + tipo;
+  const iconos = { ok:"✅", saving:"⏳", error:"❌", info:"☁️" };
+  icon.textContent = iconos[tipo] || "☁️";
+  txt.textContent  = texto;
+}
+
+function getUsuario() {
+  const u = document.getElementById("sync-user");
+  return u ? (u.value.trim() || "—") : "—";
+}
+
+// ── Leer config del nivel seleccionado ───────────────────────────────────────
+async function onNivelChange() {
+  const nivel = document.getElementById("e-nivel").value;
+  const cardInst = document.getElementById("card-inst");
+  if (!nivel) { if(cardInst) cardInst.style.display = "none"; return; }
+  if(cardInst) cardInst.style.display = "";
+
+  if (GAS_URL === "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec") {
+    setSyncStatus("info", "App sin conexión a Sheets — completá los datos manualmente");
+    return;
+  }
+
+  setSyncStatus("saving", "Cargando datos del nivel " + nivel + "...");
+  try {
+    const res = await fetch(`${GAS_URL}?clave=${GAS_CLAVE}&accion=leerConfig`);
+    const json = await res.json();
+    if (json.ok && json.niveles) {
+      const cfg = json.niveles.find(n => n.nivel === nivel);
+      if (cfg) {
+        const set = (id, val) => { const el = document.getElementById(id); if(el) el.value = val || ""; };
+        set("e-nom",  cfg.nombre);
+        set("e-num",  cfg.numDIPREGEP);
+        set("e-dist", cfg.distrito);
+        set("e-subv", cfg.subvencion);
+        // Director/a
+        set("d-nom",  cfg.director);
+        setSyncStatus("ok", "Datos del nivel " + nivel + " cargados ✓");
+      } else {
+        setSyncStatus("info", "Nivel nuevo — completá los datos y se guardarán automáticamente");
+      }
+      // Cargar movimientos del nivel
+      await cargarMovimientosDesdeSheets(nivel);
+    }
+  } catch(e) {
+    setSyncStatus("error", "Sin conexión a Sheets — trabajando sin sincronización");
+  }
+}
+
+// ── Guardar config cuando cambia algún campo ──────────────────────────────────
+async function guardarConfigEnSheets() {
+  if (GAS_URL === "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec") return;
+  const nivel = document.getElementById("e-nivel")?.value;
+  if (!nivel) return;
+  const g = id => document.getElementById(id)?.value || "";
+  const payload = {
+    clave: GAS_CLAVE,
+    accion: "guardarConfig",
+    data: {
+      niveles: [{
+        nivel,
+        nombre:      g("e-nom"),
+        numDIPREGEP: g("e-num"),
+        distrito:    g("e-dist"),
+        subvencion:  g("e-subv"),
+        director:    g("d-nom"),
+      }]
+    }
+  };
+  try {
+    setSyncStatus("saving", "Guardando configuración...");
+    const res = await fetch(GAS_URL, { method:"POST", body: JSON.stringify(payload) });
+    const json = await res.json();
+    setSyncStatus(json.ok ? "ok" : "error", json.ok ? "Configuración guardada ✓" : json.error);
+  } catch(e) {
+    setSyncStatus("error", "Error al guardar — verificá la conexión");
+  }
+}
+
+// ── Guardar un movimiento ─────────────────────────────────────────────────────
+async function guardarMovimientoEnSheets(mov) {
+  if (GAS_URL === "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec") return;
+  const nivel  = document.getElementById("e-nivel")?.value || "—";
+  const mesRaw = document.getElementById("e-mes")?.value || "";
+  const mesAnio = mesRaw ? mesRaw.split("-").reverse().join("/") : "—";
+  const payload = {
+    clave: GAS_CLAVE,
+    accion: "guardarMovimiento",
+    data: { ...mov, nivel, mesAnio, usuario: getUsuario(), timestamp: new Date().toLocaleString("es-AR") }
+  };
+  try {
+    setSyncStatus("saving", "Guardando movimiento...");
+    const res = await fetch(GAS_URL, { method:"POST", body: JSON.stringify(payload) });
+    const json = await res.json();
+    setSyncStatus(json.ok ? "ok" : "error", json.ok ? "Guardado en Sheets ✓" : json.error);
+  } catch(e) {
+    setSyncStatus("error", "Error al guardar — el movimiento quedó solo en esta sesión");
+  }
+}
+
+// ── Eliminar un movimiento ────────────────────────────────────────────────────
+async function eliminarMovimientoEnSheets(id) {
+  if (GAS_URL === "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec") return;
+  const payload = { clave: GAS_CLAVE, accion: "eliminarMovimiento", data: { id } };
+  try {
+    await fetch(GAS_URL, { method:"POST", body: JSON.stringify(payload) });
+  } catch(e) { /* silencioso */ }
+}
+
+// ── Cargar movimientos desde Sheets al abrir el nivel ────────────────────────
+async function cargarMovimientosDesdeSheets(nivel) {
+  if (GAS_URL === "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec") return;
+  const mesRaw  = document.getElementById("e-mes")?.value || "";
+  const mesAnio = mesRaw ? mesRaw.split("-").reverse().join("/") : "";
+  try {
+    setSyncStatus("saving", "Cargando movimientos del nivel " + nivel + "...");
+    const res = await fetch(`${GAS_URL}?clave=${GAS_CLAVE}&accion=leerMovimientos&nivel=${encodeURIComponent(nivel)}`);
+    const json = await res.json();
+    if (json.ok && json.movimientos) {
+      // Filtrar por mes/año si está seleccionado
+      const filtrados = mesAnio
+        ? json.movimientos.filter(m => m.mesAnio === mesAnio)
+        : json.movimientos;
+      // Mapear al formato interno de la app
+      state.movimientos = filtrados.map(m => ({
+        id:            m.id,
+        tipoPpal:      m.tipoPpal,
+        subtipoTitulo: m.subtipoTitulo,
+        area:          m.area,
+        datos:         m.datos || {},
+        observacion:   m.observacion,
+      }));
+      renderMovimientos();
+      setSyncStatus("ok", `${filtrados.length} movimiento(s) cargado(s) desde Sheets ✓`);
+    }
+  } catch(e) {
+    setSyncStatus("error", "No se pudieron cargar los movimientos desde Sheets");
+  }
+}
+
+// ── Guardar historial al exportar ─────────────────────────────────────────────
+async function guardarHistorialEnSheets() {
+  if (GAS_URL === "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec") return;
+  const nivel  = document.getElementById("e-nivel")?.value || "—";
+  const mesRaw = document.getElementById("e-mes")?.value || "";
+  const mesAnio = mesRaw ? mesRaw.split("-").reverse().join("/") : "—";
+  const payload = {
+    clave: GAS_CLAVE,
+    accion: "guardarHistorial",
+    data: {
+      nivel, mesAnio,
+      cantMovimientos: state.movimientos.length,
+      usuario:    getUsuario(),
+      movimientos: state.movimientos
+    }
+  };
+  try {
+    await fetch(GAS_URL, { method:"POST", body: JSON.stringify(payload) });
+  } catch(e) { /* silencioso */ }
+}
+
+// ── Autoguardado al cambiar campos de institución ─────────────────────────────
+function initAutoguardadoConfig() {
+  // Esperar a que card-inst sea visible antes de enganchar eventos
+  ["e-nom","e-num","e-dist","e-subv","d-nom"].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("change", () => guardarConfigEnSheets());
+  });
+}
+
+// ── Generar ID único para cada movimiento ─────────────────────────────────────
+function generarId() {
+  return Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+}
+
+
+// ---- ESTADO GLOBAL ----
+let state = {
+  step: 1,
+  institucion: {},
+  periodo: {},
+  movimientos: [],
+  modalTipoPrincipal: null,
+  modalSubtipo: null,
+  modalDatos: {},
+  editandoIdx: null,
+};
+
+// ---- NAVEGACIÓN DE PASOS ----
+function goToStep(n) {
+  if (n > 1 && !validarStep(state.step)) return;
+
+  // Guardar datos del step actual
+  if (state.step === 1) guardarInstitucion();
+  if (state.step === 2) guardarPeriodo();
+
+  state.step = n;
+
+  document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+
+  document.querySelectorAll('.step').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'done');
+    if (s === n) el.classList.add('active');
+    else if (s < n) el.classList.add('done');
+  });
+
+  if (n === 4) renderResumen();
+
+  const btnExp = document.getElementById('btn-exportar');
+  if (btnExp) btnExp.disabled = state.movimientos.length === 0;
+}
+
+function validarStep(n) {
+  if (n === 1) {
+    const req = ['inst-nombre','inst-numero','inst-distrito','inst-nivel','inst-subvencion','inst-director'];
+    for (const id of req) {
+      const el = document.getElementById(id);
+      if (!el || !el.value.trim()) {
+        el && el.focus();
+        alert('Por favor completá todos los campos obligatorios (*)');
+        return false;
+      }
+    }
+  }
+  if (n === 2) {
+    if (!document.getElementById('per-mes').value || !document.getElementById('per-anio').value) {
+      alert('Completá el mes y año de la novedad.');
+      return false;
+    }
+  }
+  return true;
+}
+
+function guardarInstitucion() {
+  state.institucion = {
+    nombre:    v('inst-nombre'),
+    numero:    v('inst-numero'),
+    distrito:  v('inst-distrito'),
+    distNro:   v('inst-distrito-num'),
+    nivel:     v('inst-nivel'),
+    subvencion:v('inst-subvencion'),
+    director:  v('inst-director'),
+    sello:     v('inst-sello'),
+    area:      v('inst-area'),
+  };
+}
+
+function guardarPeriodo() {
+  state.periodo = {
+    mes:       v('per-mes'),
+    mesNombre: MESES[parseInt(v('per-mes')) || 0],
+    anio:      v('per-anio'),
+    fechaPres: v('per-fecha-pres'),
+  };
+  checkPlazo();
+}
+
+function v(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+// ---- ALERTA PLAZO ----
+function checkPlazo() {
+  const mes = parseInt(state.periodo.mes);
+  const anio = parseInt(state.periodo.anio);
+  const fechaPres = state.periodo.fechaPres;
+  const el = document.getElementById('alerta-plazo');
+  if (!mes || !anio || !fechaPres) { el.style.display = 'none'; return; }
+
+  const mesSig = mes === 12 ? 1 : mes + 1;
+  const anioSig = mes === 12 ? anio + 1 : anio;
+  const pres = new Date(fechaPres);
+  const limiteRef = new Date(anioSig, mesSig - 1, 5);
+
+  if (pres > limiteRef) {
+    el.style.display = 'flex';
+    document.getElementById('alerta-plazo-texto').textContent =
+      `Atención: la fecha de presentación (${fechaPres}) puede estar fuera del plazo. ` +
+      `Las novedades de ${MESES[mes]} ${anio} deben ingresar hasta el 5° día hábil de ${MESES[mesSig]} ${anioSig}.`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ---- MODAL: FLUJO DE 3 PASOS ----
+// Paso A: elegir tipo principal
+// Paso B: elegir subtipo
+// Paso C: completar datos del movimiento
+
+function abrirModal(editIdx = null) {
+  state.modalTipoPrincipal = null;
+  state.modalSubtipo = null;
+  state.modalDatos = {};
+  state.editandoIdx = editIdx;
+
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('open');
+
+  if (editIdx !== null) {
+    const mov = state.movimientos[editIdx];
+    state.modalTipoPrincipal = mov.tipoPrincipal;
+    state.modalSubtipo = SUBTIPOS[mov.tipoPrincipal].find(s => s.id === mov.subtipoId);
+    state.modalDatos = { ...mov.datos };
+    document.getElementById('modal-titulo').textContent = 'Editar Movimiento';
+    renderModalCampos();
+  } else {
+    document.getElementById('modal-titulo').textContent = 'Nuevo Movimiento';
+    renderModalTipos();
+  }
+}
+
+function cerrarModal(e) {
+  if (e.target.id === 'modal-overlay') cerrarModalDirecto();
+}
+function cerrarModalDirecto() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// --- PASO A: Elegir tipo principal ---
+function renderModalTipos() {
+  const body = document.getElementById('modal-body');
+  body.innerHTML = `
+    <p style="font-size:0.85rem;color:#718096;margin-bottom:1rem;">
+      Seleccioná el tipo de movimiento que querés informar:
+    </p>
+    <div class="tipo-grid">
+      ${TIPOS_PRINCIPALES.map(t => `
+        <div class="tipo-card" onclick="seleccionarTipoPrincipal('${t.id}')">
+          <span class="tipo-card-icon">${t.icon}</span>
+          <div class="tipo-card-titulo">${t.titulo}</div>
+          <div class="tipo-card-desc">${t.desc}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function seleccionarTipoPrincipal(id) {
+  state.modalTipoPrincipal = id;
+  renderModalSubtipos();
+}
+
+// --- PASO B: Elegir subtipo ---
+function renderModalSubtipos() {
+  const tipo = TIPOS_PRINCIPALES.find(t => t.id === state.modalTipoPrincipal);
+  const lista = SUBTIPOS[state.modalTipoPrincipal];
+  const body = document.getElementById('modal-body');
+
+  body.innerHTML = `
+    <div style="margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem;">
+      <button class="btn-ghost" onclick="renderModalTipos()" style="padding:0.3rem 0.7rem;font-size:0.8rem;">← Volver</button>
+      <span style="font-size:0.88rem;font-weight:600;color:var(--azul);">${tipo.icon} ${tipo.titulo}</span>
+    </div>
+    <p style="font-size:0.82rem;color:#718096;margin-bottom:0.8rem;">Seleccioná el caso que corresponde:</p>
+    <div class="subtipo-list">
+      ${lista.map(s => `
+        <div class="subtipo-item" onclick="seleccionarSubtipo('${s.id}')">
+          <span class="subtipo-num">Caso ${s.num}</span>
+          <span class="subtipo-titulo">${s.titulo}</span>
+          <span class="subtipo-area">Área: ${s.area}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function seleccionarSubtipo(id) {
+  const lista = SUBTIPOS[state.modalTipoPrincipal];
+  state.modalSubtipo = lista.find(s => s.id === id);
+  renderModalCampos();
+}
+
+// --- PASO C: Completar campos ---
+function renderModalCampos() {
+  const sub = state.modalSubtipo;
+  const body = document.getElementById('modal-body');
+  const tipo = TIPOS_PRINCIPALES.find(t => t.id === state.modalTipoPrincipal);
+
+  // Los campos del subtipo + siempre curso/sección y obs_extra al final
+  const campos = [...(sub.campos || []), 'curso_seccion', 'observaciones_extra'];
+
+  body.innerHTML = `
+    <div style="margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+      <button class="btn-ghost" onclick="renderModalSubtipos()" style="padding:0.3rem 0.7rem;font-size:0.8rem;">← Volver</button>
+      <span style="font-size:0.88rem;font-weight:600;color:var(--azul);">${tipo.icon} ${sub.titulo}</span>
+      <span class="mov-area-badge ${areaClass(sub.area)}">${sub.area}</span>
+    </div>
+
+    ${sub.nota ? `<div class="info-box"><strong>Nota:</strong> ${sub.nota}</div>` : ''}
+
+    <div class="modal-section">
+      <div class="modal-section-title">Datos del movimiento</div>
+      <div class="form-grid">
+        ${campos.map(campo => renderCampo(campo)).join('')}
+      </div>
+    </div>
+
+    <div class="modal-section" id="obs-preview-section">
+      <span class="obs-preview-label">Vista previa — Texto de Observaciones (col. 14)</span>
+      <div class="obs-preview" id="obs-preview-text">Completá los campos para ver la observación generada.</div>
+    </div>
+
+    <div class="modal-nav">
+      <button class="btn-ghost" onclick="cerrarModalDirecto()">Cancelar</button>
+      <button class="btn-primary" onclick="guardarMovimiento()">
+        ${state.editandoIdx !== null ? '✓ Guardar cambios' : '+ Agregar movimiento'}
+      </button>
+    </div>
+  `;
+
+  // Pre-cargar valores si es edición
+  if (state.editandoIdx !== null) {
+    campos.forEach(c => {
+      const el = document.getElementById('campo-' + c);
+      if (el && state.modalDatos[c] !== undefined) el.value = state.modalDatos[c];
+    });
+  }
+
+  // Listener para actualizar preview
+  campos.forEach(c => {
+    const el = document.getElementById('campo-' + c);
+    if (el) el.addEventListener('input', actualizarObsPreview);
+    if (el) el.addEventListener('change', actualizarObsPreview);
+  });
+
+  actualizarObsPreview();
+}
+
+function renderCampo(campo) {
+  const cfg = CAMPOS_CONFIG[campo];
+  if (!cfg) return '';
+  const id = 'campo-' + campo;
+  const req = cfg.req ? '<span class="req">*</span>' : '';
+
+  if (cfg.tipo === 'text' || cfg.tipo === 'date' || cfg.tipo === 'number') {
+    return `
+      <div class="field-group ${campo === 'docente' || campo === 'observaciones_extra' || campo === 'documentacion' ? 'span-2' : ''}">
+        <label for="${id}">${cfg.label} ${req}</label>
+        <input type="${cfg.tipo}" id="${id}" placeholder="${cfg.placeholder || ''}" />
+      </div>`;
+  }
+  if (cfg.tipo === 'select') {
+    return `
+      <div class="field-group">
+        <label for="${id}">${cfg.label} ${req}</label>
+        <select id="${id}">
+          <option value="">— Seleccionar —</option>
+          ${cfg.opciones.map(o => `<option value="${o.val}">${o.label}</option>`).join('')}
+        </select>
+      </div>`;
+  }
+  if (cfg.tipo === 'textarea') {
+    return `
+      <div class="field-group span-2">
+        <label for="${id}">${cfg.label} ${req}</label>
+        <textarea id="${id}" placeholder="${cfg.placeholder || ''}"></textarea>
+      </div>`;
+  }
+  return '';
+}
+
+function actualizarObsPreview() {
+  const sub = state.modalSubtipo;
+  if (!sub) return;
+
+  // Leer todos los campos del DOM
+  const datos = {};
+  (sub.campos || []).forEach(c => {
+    const el = document.getElementById('campo-' + c);
+    datos[c] = el ? el.value.trim() : '';
+  });
+
+  // Formatear fecha legible
+  if (datos.fecha) datos.fecha = formatDate(datos.fecha);
+  if (datos.fecha_hasta) datos.fecha_hasta = formatDate(datos.fecha_hasta);
+
+  const texto = sub.plantillaObs(datos);
+  const el = document.getElementById('obs-preview-text');
+  if (el) {
+    const curso = document.getElementById('campo-curso_seccion');
+    const obsExtra = document.getElementById('campo-observaciones_extra');
+    let full = texto;
+    if (curso && curso.value.trim()) full += ` Curso/Sección: ${curso.value.trim()}.`;
+    if (obsExtra && obsExtra.value.trim()) full += ` ${obsExtra.value.trim()}`;
+    el.textContent = full;
+  }
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ---- GUARDAR MOVIMIENTO ----
+function guardarMovimiento() {
+  const sub = state.modalSubtipo;
+  const datos = {};
+  const campos = [...(sub.campos || []), 'curso_seccion', 'observaciones_extra'];
+
+  campos.forEach(c => {
+    const el = document.getElementById('campo-' + c);
+    datos[c] = el ? el.value.trim() : '';
+  });
+
+  // Validar campos requeridos
+  const faltantes = sub.campos.filter(c => {
+    const cfg = CAMPOS_CONFIG[c];
+    return cfg && cfg.req && !datos[c];
+  });
+  if (faltantes.length > 0) {
+    alert('Completá los campos obligatorios: ' + faltantes.map(f => CAMPOS_CONFIG[f]?.label).join(', '));
+    return;
+  }
+
+  // Generar observación final
+  const datosFecha = { ...datos };
+  if (datosFecha.fecha) datosFecha.fecha = formatDate(datosFecha.fecha);
+  if (datosFecha.fecha_hasta) datosFecha.fecha_hasta = formatDate(datosFecha.fecha_hasta);
+  let obs = sub.plantillaObs(datosFecha);
+  if (datos.curso_seccion) obs += ` Curso/Sección: ${datos.curso_seccion}.`;
+  if (datos.observaciones_extra) obs += ` ${datos.observaciones_extra}`;
+
+  const movimiento = {
+    tipoPrincipal: state.modalTipoPrincipal,
+    subtipoId: sub.id,
+    subtipoNum: sub.num,
+    subtipoTitulo: sub.titulo,
+    area: sub.area,
+    datos,
+    observacion: obs,
+  };
+
+  // Asignar ID único si no tiene
+  if (!movimiento.id) movimiento.id = generarId();
+
+  if (state.editandoIdx !== null) {
+    state.movimientos[state.editandoIdx] = movimiento;
+  } else {
+    state.movimientos.push(movimiento);
+  }
+
+  // Sincronizar con Google Sheets
+  guardarMovimientoEnSheets(movimiento);
+
+  cerrarModalDirecto();
+  renderMovimientosLista();
+}
+
+// ---- RENDERIZAR LISTA DE MOVIMIENTOS ----
+function renderMovimientosLista() {
+  const lista = document.getElementById('movimientos-lista');
+  const vacioMsg = document.getElementById('lista-vacia-msg');
+  const btn4 = document.getElementById('btn-paso4');
+  const btnExp = document.getElementById('btn-exportar');
+
+  if (state.movimientos.length === 0) {
+    lista.innerHTML = '';
+    lista.appendChild(vacioMsg || crearVacioMsg());
+    if (btn4) btn4.disabled = true;
+    if (btnExp) btnExp.disabled = true;
+    return;
+  }
+
+  if (btn4) btn4.disabled = false;
+  if (btnExp) btnExp.disabled = false;
+
+  lista.innerHTML = state.movimientos.map((m, i) => `
+    <div class="movimiento-card">
+      <div class="mov-card-left">
+        <div class="mov-card-top">
+          <span class="mov-numero">#${String(i+1).padStart(2,'0')}</span>
+          <span class="mov-tipo-badge badge-${m.tipoPrincipal}">${m.tipoPrincipal.charAt(0).toUpperCase() + m.tipoPrincipal.slice(1)}</span>
+          <span class="mov-area-badge ${areaClass(m.area)}">${m.area}</span>
+          ${m.datos.situacion ? `<span style="font-size:0.72rem;color:#718096">Rev. ${m.datos.situacion}</span>` : ''}
+        </div>
+        <div class="mov-docente">${m.datos.docente || '—'}</div>
+        <div class="mov-detalle">
+          ${m.datos.dni ? `DNI ${m.datos.dni}` : ''}${m.datos.secuencia ? ` · Sec. ${m.datos.secuencia}` : ''}
+          ${m.datos.categoria ? ` · Cat. ${m.datos.categoria}` : ''}
+          ${m.datos.horas ? ` · ${m.datos.horas} hs/móds.` : ''}
+        </div>
+        <div class="mov-obs">${m.observacion}</div>
+      </div>
+      <div class="mov-card-actions">
+        <button class="btn-edit-sm" onclick="abrirModal(${i})">Editar</button>
+        <button class="btn-danger" onclick="eliminarMovimiento(${i})">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function crearVacioMsg() {
+  const d = document.createElement('div');
+  d.id = 'lista-vacia-msg';
+  d.className = 'lista-vacia';
+  d.innerHTML = '<span class="lista-vacia-icon">📋</span><p>Aún no cargaste ningún movimiento.<br>Usá el botón para agregar.</p>';
+  return d;
+}
+
+function eliminarMovimiento(idx) {
+  if (!confirm('¿Eliminás este movimiento?')) return;
+  const mov = state.movimientos[idx];
+  if (mov && mov.id) eliminarMovimientoEnSheets(mov.id);
+  state.movimientos.splice(idx, 1);
+  renderMovimientosLista();
+}
+
+function areaClass(area) {
+  if (area === AREAS.LIQUIDACIONES) return 'area-liquidaciones';
+  if (area === AREAS.ENFERMEDADES)  return 'area-enfermedades';
+  if (area === AREAS.ASIGNACIONES)  return 'area-asignaciones';
+  return 'area-coordinacion';
+}
+
+// ---- RESUMEN (STEP 4) ----
+function renderResumen() {
+  const c = document.getElementById('resumen-container');
+  const inst = state.institucion;
+  const per = state.periodo;
+
+  c.innerHTML = `
+    <div class="resumen-card">
+      <div class="resumen-card-header">Datos de la Institución</div>
+      <div class="resumen-card-body">
+        ${resRow('Establecimiento', inst.nombre)}
+        ${resRow('N° Estab.', inst.numero)}
+        ${resRow('Distrito', `${inst.distrito}${inst.distNro ? ' (N° ' + inst.distNro + ')' : ''}`)}
+        ${resRow('Nivel / Modalidad', inst.nivel)}
+        ${resRow('% Subvención', inst.subvencion + '%')}
+        ${resRow('Director/a', inst.director)}
+        ${resRow('Área de destino', inst.area || 'Según tipo de movimiento')}
+      </div>
+    </div>
+
+    <div class="resumen-card">
+      <div class="resumen-card-header">Período</div>
+      <div class="resumen-card-body">
+        ${resRow('Mes/Año de la novedad', `${per.mesNombre} ${per.anio}`)}
+        ${resRow('Fecha de presentación', per.fechaPres || '—')}
+      </div>
+    </div>
+
+    <div class="resumen-card">
+      <div class="resumen-card-header">Movimientos (${state.movimientos.length})</div>
+      <div style="overflow-x:auto;">
+        <table class="resumen-movimientos-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tipo</th>
+              <th>Docente</th>
+              <th>DNI</th>
+              <th>Cat.</th>
+              <th>Hs</th>
+              <th>Rev.</th>
+              <th>Área</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.movimientos.map((m, i) => `
+              <tr>
+                <td><span class="mov-numero">${i+1}</span></td>
+                <td><span class="mov-tipo-badge badge-${m.tipoPrincipal}" style="font-size:0.68rem">${m.tipoPrincipal}</span></td>
+                <td>${m.datos.docente || '—'}</td>
+                <td>${m.datos.dni || '—'}</td>
+                <td>${m.datos.categoria || '—'}</td>
+                <td>${m.datos.horas || '—'}</td>
+                <td>${m.datos.situacion || '—'}</td>
+                <td><span class="mov-area-badge ${areaClass(m.area)}" style="font-size:0.68rem">${m.area}</span></td>
+                <td style="font-size:0.78rem;max-width:220px">${m.observacion}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function resRow(label, val) {
+  return `<div class="resumen-row"><span class="resumen-label">${label}</span><span class="resumen-val">${val || '—'}</span></div>`;
+}
+
+// ---- EXPORTAR XLS ----
+function exportarXLS() {
+  const inst = state.institucion;
+  const per = state.periodo;
+  const movs = state.movimientos;
+
+  const wb = XLSX.utils.book_new();
+  const wsData = [];
+
+  // ---- FILA 1: Título ----
+  wsData.push([
+    'PROVINCIA DE BUENOS AIRES',
+    '', '', '', '',
+    'DIRECCIÓN GENERAL DE CULTURA Y EDUCACIÓN',
+    '', '', '', '',
+    'DIRECCIÓN PROVINCIAL DE EDUCACIÓN DE GESTIÓN PRIVADA',
+    '', '', ''
+  ]);
+
+  // ---- FILA 2: Encabezado planilla ----
+  wsData.push(['PLANILLA DE MOVIMIENTOS', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+
+  // ---- FILA 3: Datos institución ----
+  wsData.push([
+    'ESTABLECIMIENTO:', inst.nombre,
+    '', 'N°:', inst.numero,
+    'DISTRITO:', inst.distrito,
+    'N° DISTRITO:', inst.distNro || '',
+    'NIVEL:', inst.nivel,
+    '% SUBV.:', inst.subvencion + '%', ''
+  ]);
+
+  // ---- FILA 4: Período y área ----
+  const areaDestino = inst.area || 'Según tipo de movimiento';
+  wsData.push([
+    'PERÍODO:', `${per.mesNombre || ''} ${per.anio || ''}`,
+    '', 'ÁREA DE DESTINO:', areaDestino,
+    '', '', '', '',
+    'FECHA PRESENTACIÓN:', per.fechaPres || '',
+    '', '', ''
+  ]);
+
+  // ---- FILA 5: Vacía separadora ----
+  wsData.push([]);
+
+  // ---- FILA 6: CABECERAS DE COLUMNAS (según planilla oficial) ----
+  wsData.push([
+    'Col. 1\nAPELLIDO Y NOMBRE',       // 1
+    'Col. 2\nDNI',                       // 2
+    'Col. 3\nSECUENCIA',                // 3
+    'Col. 4\nSIT. REVISTA',             // 4
+    'Col. 5\nTIPO MOV.',                // 5
+    'Col. 6\nFECHA DESDE',              // 6
+    'Col. 7\nFECHA HASTA',              // 7
+    'Col. 8\nCATEGORÍA',               // 8
+    'Col. 9\nCURSO / TURNO',            // 9
+    'Col. 10\nJOR\nNADA',              // 10
+    'Col. 11\nCANT. HS\nO MÓDULOS',    // 11
+    'Col. 12\nANTIG.\nAÑOS',           // 12
+    'Col. 13\nANTIG.\nMESES',          // 13
+    'Col. 14\nOBSERVACIONES',           // 14
+  ]);
+
+  // ---- FILAS DE DATOS ----
+  movs.forEach((m, i) => {
+    const d = m.datos;
+
+    // Antigüedad: convertir años decimales a años/meses
+    let antigAnios = '';
+    let antigMeses = '';
+    if (d.antiguedad) {
+      const total = parseFloat(d.antiguedad);
+      antigAnios = Math.floor(total);
+      antigMeses = Math.round((total - antigAnios) * 12);
+    }
+
+    // Tipo de movimiento para col. 5
+    const tipoMov = {
+      alta: 'A',
+      baja: 'B',
+      modificacion: 'M',
+      asignacion: 'AF',
+    }[m.tipoPrincipal] || 'M';
+
+    wsData.push([
+      d.docente || '',                          // 1
+      d.dni || '',                               // 2
+      d.secuencia || d.secuencia_ant || '',      // 3
+      d.situacion || '',                         // 4
+      tipoMov,                                   // 5
+      d.fecha ? formatXLSDate(d.fecha) : '',    // 6
+      d.fecha_hasta ? formatXLSDate(d.fecha_hasta) : '', // 7
+      d.categoria || '',                         // 8
+      d.curso_seccion || '',                     // 9
+      '',                                        // 10 (jornada)
+      d.horas || '',                             // 11
+      antigAnios,                                // 12
+      antigMeses || '',                          // 13
+      m.observacion || '',                       // 14
+    ]);
+  });
+
+  // ---- FILAS VACÍAS ADICIONALES (para completar a mano si hace falta) ----
+  for (let i = 0; i < 5; i++) {
+    wsData.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+  }
+
+  // ---- FILA FINAL: Firma ----
+  wsData.push([]);
+  wsData.push([
+    'FIRMA Y SELLO DIRECTOR/A:', inst.director,
+    '', '', '', '', '',
+    'FIRMA Y SELLO INSPECTOR/A:', '',
+    '', '', '', '', ''
+  ]);
+
+  // ---- CREAR WORKSHEET ----
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // ---- ANCHOS DE COLUMNA ----
+  ws['!cols'] = [
+    { wch: 28 }, // A - Apellido y Nombre
+    { wch: 14 }, // B - DNI
+    { wch: 10 }, // C - Secuencia
+    { wch: 10 }, // D - Sit. Revista
+    { wch: 7  }, // E - Tipo Mov
+    { wch: 12 }, // F - Fecha desde
+    { wch: 12 }, // G - Fecha hasta
+    { wch: 10 }, // H - Categoría
+    { wch: 10 }, // I - Curso
+    { wch: 6  }, // J - Jornada
+    { wch: 8  }, // K - Hs/Módulos
+    { wch: 8  }, // L - Antig. Años
+    { wch: 8  }, // M - Antig. Meses
+    { wch: 55 }, // N - Observaciones
+  ];
+
+  // ---- ESTILOS via SheetJS (ce) ----
+  applyStyles(ws, wsData.length, movs.length);
+
+  // ---- AGREGAR HOJA ----
+  XLSX.utils.book_append_sheet(wb, ws, 'Planilla de Movimientos');
+
+  // ---- NOMBRE DEL ARCHIVO ----
+  const nombreArch = `PlanillaMovimientos_${inst.numero || 'INST'}_${per.anio || ''}${String(per.mes || '').padStart(2,'0')}.xlsx`;
+
+  // ---- DESCARGAR ----
+  XLSX.writeFile(wb, nombreArch);
+}
+
+function formatXLSDate(isoOrSlash) {
+  // Acepta dd/mm/yyyy o yyyy-mm-dd
+  if (!isoOrSlash) return '';
+  if (isoOrSlash.includes('/')) return isoOrSlash;
+  const [y, m, d] = isoOrSlash.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function applyStyles(ws, totalRows, numMovs) {
+  // SheetJS CE no soporta estilos nativos, pero podemos usar
+  // el truco de definir !merges para las filas de encabezado
+
+  ws['!merges'] = [
+    // Fila 1: título principal (merge A1:N1)
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } },
+    // Fila 2: subtítulo
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } },
+    // Fila 3: datos institución — algunos merges
+    { s: { r: 2, c: 1 }, e: { r: 2, c: 3 } },  // nombre institución
+    // Fila 4: período
+    { s: { r: 3, c: 1 }, e: { r: 3, c: 2 } },  // período
+    { s: { r: 3, c: 5 }, e: { r: 3, c: 8 } },  // área
+    // Observaciones — merge para col 14 en cada fila de datos
+    ...Array.from({ length: numMovs }, (_, i) => ({
+      s: { r: 7 + i, c: 13 }, e: { r: 7 + i, c: 13 }
+    })),
+  ];
+
+  // Altura de fila para cabecera de columnas
+  ws['!rows'] = [
+    { hpt: 20 }, // fila 1
+    { hpt: 18 }, // fila 2
+    { hpt: 16 }, // fila 3
+    { hpt: 14 }, // fila 4
+    { hpt: 6  }, // fila 5 (separador)
+    { hpt: 36 }, // fila 6 (cabeceras — doble línea)
+    { hpt: 5  }, // fila 7 (vacía antes de datos)
+    ...Array.from({ length: numMovs + 5 }, () => ({ hpt: 18 })),
+  ];
+}
+
+// ---- RESET ----
+function resetApp() {
+  if (!confirm('¿Empezar una nueva planilla? Se perderán los datos actuales.')) return;
+  state = { step: 1, institucion: {}, periodo: {}, movimientos: [], modalTipoPrincipal: null, modalSubtipo: null, modalDatos: {}, editandoIdx: null };
+  // Reset campos
+  ['inst-nombre','inst-numero','inst-distrito','inst-distrito-num','inst-nivel',
+   'inst-subvencion','inst-director','inst-sello','inst-area',
+   'per-mes','per-anio','per-fecha-pres'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderMovimientosLista();
+  goToStep(1);
+  const btn = document.getElementById('btn-exportar');
+  if (btn) btn.disabled = true;
+}
+
+// ---- BOTONES HEADER ----
+document.getElementById('btn-nuevo').addEventListener('click', resetApp);
+document.getElementById('btn-exportar').addEventListener('click', exportarXLS);
+
+// ---- INIT ----
+renderMovimientosLista();async function exportXLS() {
+  const movs = st.movs.length ? st.movs : [getData()];
+  const base = movs[0];
+
+  // ── ExcelJS: crear workbook con estilos completos ────────────────────────
+  const ExcelJS = window.ExcelJS;
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'DIPREGEP Planilla de Movimientos';
+  const ws = wb.addWorksheet('Planilla de Movimientos', {
+    pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1 }
+  });
+
+  const areaLabel = {
+    L:'LIQUIDACIONES', E:'LICENCIAS POR ENFERMEDAD',
+    A:'ASIGNACIONES FAMILIARES', C:'COORDINACIÓN ADMINISTRATIVA'
+  };
+
+  // ── Helpers de estilo ────────────────────────────────────────────────────
+  const thinBorder = { style: 'thin', color: { argb: 'FF000000' } };
+  const allBorders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+
+  function setRow(rowNum, values) {
+    const row = ws.getRow(rowNum);
+    values.forEach((v, i) => { if (v !== undefined) row.getCell(i + 1).value = v; });
+    row.commit();
+    return row;
+  }
+
+  function styleCell(col, row, opts = {}) {
+    const cell = ws.getCell(row, col);
+    if (opts.value !== undefined) cell.value = opts.value;
+    cell.font = { name: 'Arial', size: opts.size || 10, bold: !!opts.bold, color: { argb: opts.color || 'FF000000' } };
+    cell.alignment = { horizontal: opts.h || 'center', vertical: opts.v || 'center', wrapText: !!opts.wrap };
+    if (opts.fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: opts.fill } };
+    if (opts.borders) cell.border = opts.borders;
+    else if (opts.allB) cell.border = allBorders;
+  }
+
+  function mergeStyle(col1, row1, col2, row2, opts = {}) {
+    ws.mergeCells(row1, col1, row2, col2);
+    styleCell(col1, row1, opts);
+  }
+
+  // ── Anchos de columna ────────────────────────────────────────────────────
+  // Columnas: A=idx, B=col1DNI, C=col2Sec, D=col3Nombre, E=col4Rev,
+  //           F=col5docTipo, G=col5docNum, H=col6Funcion, I=col7Rural,
+  //           J=col8Turno, K=col9Cat, L=col10Imp, M=col11Hs,
+  //           N=col12AnioA, O=col13AnioM, P=col14Obs, Q=col14ObsCont, R=firma
+  ws.columns = [
+    { key:'A', width: 4.14  },
+    { key:'B', width: 17.14 },
+    { key:'C', width: 3.85  },
+    { key:'D', width: 20.13 },
+    { key:'E', width: 3.56  },
+    { key:'F', width: 6.0   },
+    { key:'G', width: 14.85 },
+    { key:'H', width: 3.56  },
+    { key:'I', width: 4.5   },
+    { key:'J', width: 5.0   },
+    { key:'K', width: 4.85  },
+    { key:'L', width: 13.28 },
+    { key:'M', width: 3.85  },
+    { key:'N', width: 3.42  },
+    { key:'O', width: 3.99  },
+    { key:'P', width: 16.99 },
+    { key:'Q', width: 19.14 },
+    { key:'R', width: 3.85  },
+    { key:'S', width: 6.13  },
+  ];
+
+  // ── Alturas de fila ──────────────────────────────────────────────────────
+  ws.getRow(4).height  = 15.75;
+  ws.getRow(5).height  = 12.75;
+  ws.getRow(6).height  = 12.75;
+  ws.getRow(7).height  = 12.75;
+  ws.getRow(8).height  = 16.5;
+  ws.getRow(9).height  = 21.75;
+  ws.getRow(10).height = 16.5;
+  ws.getRow(11).height = 30.0;
+  for (let r = 12; r <= 17; r++) ws.getRow(r).height = r <= 13 ? 14.25 : 16.5;
+
+  // ── FILA 4: Título ────────────────────────────────────────────────────────
+  mergeStyle(1,4, 17,4, { value:'PLANILLA DE MOVIMIENTO.', bold:true, size:11, h:'center', v:'bottom' });
+  styleCell(19,4, { value:'ANEXO II (a).', bold:true, size:14, h:'center', v:'center' });
+
+  // ── FILA 5: Indicación ALTAS|BAJAS|MODIFICACIONES ────────────────────────
+  mergeStyle(4,5, 12,5, {
+    value:'…………………………...……...…………..ALTAS   |   BAJAS   |   MODIFICACIONES   |   ADICIONALES',
+    size:8, h:'center', v:'bottom', color:'FFFFFFFF'
+  });
+
+  // ── FILA 6: Tachar lo que no corresponda ─────────────────────────────────
+  mergeStyle(6,6, 12,6, {
+    value:'………....(TACHAR LO QUE NO CORRESPONDA).',
+    size:6, h:'center', v:'top', color:'FFFFFFFF'
+  });
+
+  // ── FILA 7: Mes/año ───────────────────────────────────────────────────────
+  styleCell(13,7, { value:'Mes/año:', size:8, h:'right', v:'bottom' });
+  mergeStyle(16,7, 17,7, {
+    value: base.eMes || '',
+    size:10, h:'left', v:'bottom',
+    borders:{ bottom: thinBorder }
+  });
+
+  // ── FILA 8: Distrito / N° ─────────────────────────────────────────────────
+  styleCell(2,8, { value:'Distrito: ', size:10, h:'left', v:'bottom' });
+  mergeStyle(3,8, 5,8, { value: base.eDist || '', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
+  styleCell(6,8, { value:'N°', size:10, h:'general', v:'bottom' });
+  styleCell(7,8, { value:'', size:10, borders:{ bottom:thinBorder } });
+  styleCell(9,8, { value:'Región Nº', bold:true, size:13, h:'general', v:'bottom' });
+  styleCell(12,8, { value:'', borders:{ bottom:thinBorder } });
+
+  // ── FILA 9: Establecimiento ───────────────────────────────────────────────
+  styleCell(2,9, { value:'     Establecimiento:', size:10, h:'right', v:'bottom', borders:{ bottom:thinBorder } });
+  mergeStyle(3,9, 11,9, { value: base.eNom || '', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
+  styleCell(12,9, { value:'N°', size:10, h:'right', v:'bottom' });
+  mergeStyle(13,9, 14,9, { value: base.eNum || '', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
+  styleCell(16,9, { value:'Porcentaje:', size:10, h:'right', v:'bottom' });
+  styleCell(17,9, { value:'', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
+
+  // ── FILAS 10-11: Encabezado tipo movimiento ───────────────────────────────
+  mergeStyle(2,10, 3,11, { value:'BAJAS y MODIFICACIONES.', bold:true, size:10, h:'center', v:'bottom', wrap:true, allB:true });
+  mergeStyle(4,10, 4,11, { value:'ALTAS,  BAJAS,  MODIFICACIONES y ADICIONALES.', bold:true, size:10, h:'center', v:'bottom', wrap:true, allB:true });
+  mergeStyle(5,10, 7,11, { value:'ALTAS y ADICIONALES.', bold:true, size:10, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(8,10, 15,11,{ value:'ALTAS, MODIFICACIONES y ADICIONALES.', bold:true, size:10, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(16,10,17,11,{ value:'ALTAS, BAJAS, MODIFICACIONES y ADICIONALES.', bold:true, size:10, h:'center', v:'bottom', wrap:true, allB:true });
+
+  // ── FILAS 12-16: Cabeceras de columnas ───────────────────────────────────
+  // B12:C13 — "Según anterior planilla de haberes"
+  mergeStyle(2,12, 3,13, { value:'Según anterior planilla de haberes.', size:8, h:'center', v:'center', wrap:true, allB:true });
+  // B14:C16 — ref DNI/sec
+  mergeStyle(2,14, 3,16, { value:'…………… Documento de Identidad. …………………………..……', size:7, h:'center', v:'center', wrap:true, allB:true });
+  // D12:D16
+  mergeStyle(4,12, 4,16, { value:'Apellido y Nombres.', size:10, h:'center', v:'center', wrap:true, allB:true });
+  // E12:E16
+  mergeStyle(5,12, 5,16, { value:'Sit. Revista', size:9, h:'center', v:'center', wrap:true, allB:true });
+  // F12:G12
+  mergeStyle(6,12, 7,12, { value:'DOCUMENTO', size:9, h:'center', v:'center', borders:{left:thinBorder,right:thinBorder} });
+  // Opciones documento
+  [{r:13,n:'1',d:'Lib. Enrolamiento'},{r:14,n:'2',d:'Lib. Cívica.'},{r:15,n:'3',d:'Céd. Identidad.'},{r:16,n:'4',d:'D.N.I.'}].forEach(({r,n,d})=>{
+    styleCell(6,r, { value:n, size:8, h:'center', borders:{left:thinBorder, bottom:r===16?thinBorder:undefined} });
+    styleCell(7,r, { value:d, size:8, h:'left',   borders:{right:thinBorder, bottom:r===16?thinBorder:undefined} });
+  });
+  // H-O col headers
+  mergeStyle(8, 12, 8, 16, { value:'FUNCION',   size:9, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(9, 12, 9, 16, { value:'RURAL',     size:9, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(10,12,10,16, { value:'TURNO',     size:9, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(11,12,11,16, { value:'CATEGORIA', size:9, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(12,12,12,16, { value:'IMPORTE.',  size:9, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(13,12,13,16, { value:'N° HORAS',  size:9, h:'center', v:'center', wrap:true, allB:true });
+  mergeStyle(14,12,15,12, { value:'Antigüedad',size:9, h:'center', v:'center', allB:true });
+  mergeStyle(14,13,14,16, { value:'AÑOS',      size:8, h:'center', v:'center', allB:true });
+  mergeStyle(15,13,15,16, { value:'MESES',     size:8, h:'center', v:'center', allB:true });
+  mergeStyle(16,12,17,16, { value:'OBSERVACIONES.', size:10, h:'center', v:'center', wrap:true, allB:true });
+
+  // ── FILA 17: Numeración ───────────────────────────────────────────────────
+  ws.getRow(17).height = 12.75;
+  [[2,1],[3,2],[4,3],[5,4],[6,5],[7,''],[8,6],[9,7],[10,8],[11,9],[12,10],[13,11],[14,12],[15,13]].forEach(([c,v])=>{
+    styleCell(c,17, { value:v, size:9, h:'center', v:'center', allB:true });
+  });
+  styleCell(16,17, { value:14, size:9, h:'center', v:'center', borders:{left:thinBorder,top:thinBorder,bottom:thinBorder} });
+  styleCell(17,17, { value:'',  borders:{right:thinBorder,top:thinBorder,bottom:thinBorder} });
+
+  // ── FILAS DE DATOS ────────────────────────────────────────────────────────
+  const DATA_START = 18;
+  const MIN_ROWS = 9;
+  const totalMovs = Math.max(movs.length, MIN_ROWS);
+
+  for (let i = 0; i < totalMovs; i++) {
+    const r1 = DATA_START + i * 2;
+    const r2 = r1 + 1;
+    ws.getRow(r1).height = 12.75;
+    ws.getRow(r2).height = 12.75;
+
+    const m = i < movs.length ? movs[i] : {};
+    const fmtFecha = (iso) => {
+      if (!iso) return '';
+      const [y,mo,d] = iso.split('-');
+      return d && mo && y ? `${d}/${mo}/${y}` : iso;
+    };
+    const fechaObs = m.mvDe ? fmtFecha(m.mvDe) + (m.mvHs ? ` al ${fmtFecha(m.mvHs)}` : '') : '';
+
+    // Col B (1): DNI
+    mergeStyle(2,r1,2,r2, { value:m.dcDni||'', size:9, h:'center', v:'center', allB:true });
+    // Col C (2): Secuencia
+    mergeStyle(3,r1,3,r2, { value:m.dcSec||'', size:9, h:'center', v:'center', allB:true });
+    // Col D (3): Apellido y Nombres
+    mergeStyle(4,r1,4,r2, { value:m.dcNom||'', size:9, h:'left', v:'center', wrap:true, allB:true });
+    // Col E (4): Situación de Revista
+    mergeStyle(5,r1,5,r2, { value:m.dcRev||'', size:9, h:'center', v:'center', allB:true });
+    // Col F (5): tipo doc (siempre 4=DNI)
+    mergeStyle(6,r1,6,r2, { value:'4', size:9, h:'center', v:'center', allB:true });
+    // Col G: N° doc
+    mergeStyle(7,r1,7,r2, { value:m.dcDni||'', size:9, h:'center', v:'center', allB:true });
+    // Col H (6): Función
+    mergeStyle(8,r1,8,r2, { value:'', size:9, h:'center', v:'center', allB:true });
+    // Col I (7): Rural
+    mergeStyle(9,r1,9,r2, { value:'', size:9, h:'center', v:'center', allB:true });
+    // Col J (8): Turno
+    mergeStyle(10,r1,10,r2, { value:m.dcTur||'', size:9, h:'center', v:'center', allB:true });
+    // Col K (9): Categoría
+    mergeStyle(11,r1,11,r2, { value:m.dcCat||'', size:9, h:'center', v:'center', allB:true });
+    // Col L (10): Importe (vacío)
+    mergeStyle(12,r1,12,r2, { value:'', size:9, h:'center', v:'center', allB:true });
+    // Col M (11): N° Horas
+    mergeStyle(13,r1,13,r2, { value:m.dcHst||m.dcHs||'', size:9, h:'center', v:'center', allB:true });
+    // Col N (12): Antigüedad Años
+    mergeStyle(14,r1,14,r2, { value:m.dcAa||'', size:9, h:'center', v:'center', allB:true });
+    // Col O (13): Antigüedad Meses
+    mergeStyle(15,r1,15,r2, { value:m.dcAm||'', size:9, h:'center', v:'center', allB:true });
+    // Col P:Q (14): Observaciones
+    mergeStyle(16,r1,17,r2, { value:m.obs||'', size:8, h:'left', v:'center', wrap:true, allB:true });
+  }
+
+  // ── Lugar y fecha ─────────────────────────────────────────────────────────
+  const lastRow = DATA_START + totalMovs * 2;
+  ws.getRow(lastRow + 2).height = 12.75;
+  styleCell(2, lastRow+2, { value:'Lugar y fecha:', size:10, h:'left', v:'bottom' });
+
+  // ── Firmas ────────────────────────────────────────────────────────────────
+  const fL = lastRow + 6;  // línea firma
+  const fT = lastRow + 7;  // texto firma
+  ws.getRow(fL).height = 12.75;
+  ws.getRow(fT).height = 12.75;
+
+  // Líneas de firma
+  mergeStyle(2,fL,3,fL,   { value:'', borders:{bottom:thinBorder} });
+  mergeStyle(5,fL,7,fL,   { value:'', borders:{bottom:thinBorder} });
+  mergeStyle(10,fL,12,fL, { value:'', borders:{bottom:thinBorder} });
+  mergeStyle(16,fL,17,fL, { value:'', borders:{bottom:thinBorder} });
+
+  // Labels
+  styleCell(2,fT,  { value:'Director/a.', size:9, h:'center', v:'top' });
+  mergeStyle(5,fT,7,fT,   { value:'Representante Legal.', size:9, h:'center', v:'top', borders:{top:thinBorder} });
+  mergeStyle(10,fT,12,fT, { value:'Inspector/a.', size:9, h:'center', v:'top', borders:{top:thinBorder} });
+  mergeStyle(16,fT,17,fT, { value:'Director/a Administrativo/a.', size:9, h:'center', v:'top', borders:{top:thinBorder} });
+
+  // ── Generar y descargar ───────────────────────────────────────────────────
+  const ts = new Date();
+  const fname = `PlanillaMovimientos_${base.eNum||'EST'}_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,'0')}.xlsx`;
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fname; a.click();
+  URL.revokeObjectURL(url);
+  // Guardar snapshot en Sheets
+  guardarHistorialEnSheets();
+};
+
+// ---- NAVEGACIÓN DE PASOS ----
+function goToStep(n) {
+  if (n > 1 && !validarStep(state.step)) return;
+
+  // Guardar datos del step actual
+  if (state.step === 1) guardarInstitucion();
+  if (state.step === 2) guardarPeriodo();
+
+  state.step = n;
+
+  document.querySelectorAll('.form-step').forEach(el => el.classList.remove('active'));
+  document.getElementById('step-' + n).classList.add('active');
+
+  document.querySelectorAll('.step').forEach(el => {
+    const s = parseInt(el.dataset.step);
+    el.classList.remove('active', 'done');
+    if (s === n) el.classList.add('active');
+    else if (s < n) el.classList.add('done');
+  });
+
+  if (n === 4) renderResumen();
+
+  const btnExp = document.getElementById('btn-exportar');
+  if (btnExp) btnExp.disabled = state.movimientos.length === 0;
+}
+
+function validarStep(n) {
+  if (n === 1) {
+    const req = ['inst-nombre','inst-numero','inst-distrito','inst-nivel','inst-subvencion','inst-director'];
+    for (const id of req) {
+      const el = document.getElementById(id);
+      if (!el || !el.value.trim()) {
+        el && el.focus();
+        alert('Por favor completá todos los campos obligatorios (*)');
+        return false;
+      }
+    }
+  }
+  if (n === 2) {
+    if (!document.getElementById('per-mes').value || !document.getElementById('per-anio').value) {
+      alert('Completá el mes y año de la novedad.');
+      return false;
+    }
+  }
+  return true;
+}
+
+function guardarInstitucion() {
+  state.institucion = {
+    nombre:    v('inst-nombre'),
+    numero:    v('inst-numero'),
+    distrito:  v('inst-distrito'),
+    distNro:   v('inst-distrito-num'),
+    nivel:     v('inst-nivel'),
+    subvencion:v('inst-subvencion'),
+    director:  v('inst-director'),
+    sello:     v('inst-sello'),
+    area:      v('inst-area'),
+  };
+}
+
+function guardarPeriodo() {
+  state.periodo = {
+    mes:       v('per-mes'),
+    mesNombre: MESES[parseInt(v('per-mes')) || 0],
+    anio:      v('per-anio'),
+    fechaPres: v('per-fecha-pres'),
+  };
+  checkPlazo();
+}
+
+function v(id) {
+  const el = document.getElementById(id);
+  return el ? el.value.trim() : '';
+}
+
+// ---- ALERTA PLAZO ----
+function checkPlazo() {
+  const mes = parseInt(state.periodo.mes);
+  const anio = parseInt(state.periodo.anio);
+  const fechaPres = state.periodo.fechaPres;
+  const el = document.getElementById('alerta-plazo');
+  if (!mes || !anio || !fechaPres) { el.style.display = 'none'; return; }
+
+  const mesSig = mes === 12 ? 1 : mes + 1;
+  const anioSig = mes === 12 ? anio + 1 : anio;
+  const pres = new Date(fechaPres);
+  const limiteRef = new Date(anioSig, mesSig - 1, 5);
+
+  if (pres > limiteRef) {
+    el.style.display = 'flex';
+    document.getElementById('alerta-plazo-texto').textContent =
+      `Atención: la fecha de presentación (${fechaPres}) puede estar fuera del plazo. ` +
+      `Las novedades de ${MESES[mes]} ${anio} deben ingresar hasta el 5° día hábil de ${MESES[mesSig]} ${anioSig}.`;
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ---- MODAL: FLUJO DE 3 PASOS ----
+// Paso A: elegir tipo principal
+// Paso B: elegir subtipo
+// Paso C: completar datos del movimiento
+
+function abrirModal(editIdx = null) {
+  state.modalTipoPrincipal = null;
+  state.modalSubtipo = null;
+  state.modalDatos = {};
+  state.editandoIdx = editIdx;
+
+  const overlay = document.getElementById('modal-overlay');
+  overlay.classList.add('open');
+
+  if (editIdx !== null) {
+    const mov = state.movimientos[editIdx];
+    state.modalTipoPrincipal = mov.tipoPrincipal;
+    state.modalSubtipo = SUBTIPOS[mov.tipoPrincipal].find(s => s.id === mov.subtipoId);
+    state.modalDatos = { ...mov.datos };
+    document.getElementById('modal-titulo').textContent = 'Editar Movimiento';
+    renderModalCampos();
+  } else {
+    document.getElementById('modal-titulo').textContent = 'Nuevo Movimiento';
+    renderModalTipos();
+  }
+}
+
+function cerrarModal(e) {
+  if (e.target.id === 'modal-overlay') cerrarModalDirecto();
+}
+function cerrarModalDirecto() {
+  document.getElementById('modal-overlay').classList.remove('open');
+}
+
+// --- PASO A: Elegir tipo principal ---
+function renderModalTipos() {
+  const body = document.getElementById('modal-body');
+  body.innerHTML = `
+    <p style="font-size:0.85rem;color:#718096;margin-bottom:1rem;">
+      Seleccioná el tipo de movimiento que querés informar:
+    </p>
+    <div class="tipo-grid">
+      ${TIPOS_PRINCIPALES.map(t => `
+        <div class="tipo-card" onclick="seleccionarTipoPrincipal('${t.id}')">
+          <span class="tipo-card-icon">${t.icon}</span>
+          <div class="tipo-card-titulo">${t.titulo}</div>
+          <div class="tipo-card-desc">${t.desc}</div>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function seleccionarTipoPrincipal(id) {
+  state.modalTipoPrincipal = id;
+  renderModalSubtipos();
+}
+
+// --- PASO B: Elegir subtipo ---
+function renderModalSubtipos() {
+  const tipo = TIPOS_PRINCIPALES.find(t => t.id === state.modalTipoPrincipal);
+  const lista = SUBTIPOS[state.modalTipoPrincipal];
+  const body = document.getElementById('modal-body');
+
+  body.innerHTML = `
+    <div style="margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem;">
+      <button class="btn-ghost" onclick="renderModalTipos()" style="padding:0.3rem 0.7rem;font-size:0.8rem;">← Volver</button>
+      <span style="font-size:0.88rem;font-weight:600;color:var(--azul);">${tipo.icon} ${tipo.titulo}</span>
+    </div>
+    <p style="font-size:0.82rem;color:#718096;margin-bottom:0.8rem;">Seleccioná el caso que corresponde:</p>
+    <div class="subtipo-list">
+      ${lista.map(s => `
+        <div class="subtipo-item" onclick="seleccionarSubtipo('${s.id}')">
+          <span class="subtipo-num">Caso ${s.num}</span>
+          <span class="subtipo-titulo">${s.titulo}</span>
+          <span class="subtipo-area">Área: ${s.area}</span>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+function seleccionarSubtipo(id) {
+  const lista = SUBTIPOS[state.modalTipoPrincipal];
+  state.modalSubtipo = lista.find(s => s.id === id);
+  renderModalCampos();
+}
+
+// --- PASO C: Completar campos ---
+function renderModalCampos() {
+  const sub = state.modalSubtipo;
+  const body = document.getElementById('modal-body');
+  const tipo = TIPOS_PRINCIPALES.find(t => t.id === state.modalTipoPrincipal);
+
+  // Los campos del subtipo + siempre curso/sección y obs_extra al final
+  const campos = [...(sub.campos || []), 'curso_seccion', 'observaciones_extra'];
+
+  body.innerHTML = `
+    <div style="margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap;">
+      <button class="btn-ghost" onclick="renderModalSubtipos()" style="padding:0.3rem 0.7rem;font-size:0.8rem;">← Volver</button>
+      <span style="font-size:0.88rem;font-weight:600;color:var(--azul);">${tipo.icon} ${sub.titulo}</span>
+      <span class="mov-area-badge ${areaClass(sub.area)}">${sub.area}</span>
+    </div>
+
+    ${sub.nota ? `<div class="info-box"><strong>Nota:</strong> ${sub.nota}</div>` : ''}
+
+    <div class="modal-section">
+      <div class="modal-section-title">Datos del movimiento</div>
+      <div class="form-grid">
+        ${campos.map(campo => renderCampo(campo)).join('')}
+      </div>
+    </div>
+
+    <div class="modal-section" id="obs-preview-section">
+      <span class="obs-preview-label">Vista previa — Texto de Observaciones (col. 14)</span>
+      <div class="obs-preview" id="obs-preview-text">Completá los campos para ver la observación generada.</div>
+    </div>
+
+    <div class="modal-nav">
+      <button class="btn-ghost" onclick="cerrarModalDirecto()">Cancelar</button>
+      <button class="btn-primary" onclick="guardarMovimiento()">
+        ${state.editandoIdx !== null ? '✓ Guardar cambios' : '+ Agregar movimiento'}
+      </button>
+    </div>
+  `;
+
+  // Pre-cargar valores si es edición
+  if (state.editandoIdx !== null) {
+    campos.forEach(c => {
+      const el = document.getElementById('campo-' + c);
+      if (el && state.modalDatos[c] !== undefined) el.value = state.modalDatos[c];
+    });
+  }
+
+  // Listener para actualizar preview
+  campos.forEach(c => {
+    const el = document.getElementById('campo-' + c);
+    if (el) el.addEventListener('input', actualizarObsPreview);
+    if (el) el.addEventListener('change', actualizarObsPreview);
+  });
+
+  actualizarObsPreview();
+}
+
+function renderCampo(campo) {
+  const cfg = CAMPOS_CONFIG[campo];
+  if (!cfg) return '';
+  const id = 'campo-' + campo;
+  const req = cfg.req ? '<span class="req">*</span>' : '';
+
+  if (cfg.tipo === 'text' || cfg.tipo === 'date' || cfg.tipo === 'number') {
+    return `
+      <div class="field-group ${campo === 'docente' || campo === 'observaciones_extra' || campo === 'documentacion' ? 'span-2' : ''}">
+        <label for="${id}">${cfg.label} ${req}</label>
+        <input type="${cfg.tipo}" id="${id}" placeholder="${cfg.placeholder || ''}" />
+      </div>`;
+  }
+  if (cfg.tipo === 'select') {
+    return `
+      <div class="field-group">
+        <label for="${id}">${cfg.label} ${req}</label>
+        <select id="${id}">
+          <option value="">— Seleccionar —</option>
+          ${cfg.opciones.map(o => `<option value="${o.val}">${o.label}</option>`).join('')}
+        </select>
+      </div>`;
+  }
+  if (cfg.tipo === 'textarea') {
+    return `
+      <div class="field-group span-2">
+        <label for="${id}">${cfg.label} ${req}</label>
+        <textarea id="${id}" placeholder="${cfg.placeholder || ''}"></textarea>
+      </div>`;
+  }
+  return '';
+}
+
+function actualizarObsPreview() {
+  const sub = state.modalSubtipo;
+  if (!sub) return;
+
+  // Leer todos los campos del DOM
+  const datos = {};
+  (sub.campos || []).forEach(c => {
+    const el = document.getElementById('campo-' + c);
+    datos[c] = el ? el.value.trim() : '';
+  });
+
+  // Formatear fecha legible
+  if (datos.fecha) datos.fecha = formatDate(datos.fecha);
+  if (datos.fecha_hasta) datos.fecha_hasta = formatDate(datos.fecha_hasta);
+
+  const texto = sub.plantillaObs(datos);
+  const el = document.getElementById('obs-preview-text');
+  if (el) {
+    const curso = document.getElementById('campo-curso_seccion');
+    const obsExtra = document.getElementById('campo-observaciones_extra');
+    let full = texto;
+    if (curso && curso.value.trim()) full += ` Curso/Sección: ${curso.value.trim()}.`;
+    if (obsExtra && obsExtra.value.trim()) full += ` ${obsExtra.value.trim()}`;
+    el.textContent = full;
+  }
+}
+
+function formatDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ---- GUARDAR MOVIMIENTO ----
+function guardarMovimiento() {
+  const sub = state.modalSubtipo;
+  const datos = {};
+  const campos = [...(sub.campos || []), 'curso_seccion', 'observaciones_extra'];
+
+  campos.forEach(c => {
+    const el = document.getElementById('campo-' + c);
+    datos[c] = el ? el.value.trim() : '';
+  });
+
+  // Validar campos requeridos
+  const faltantes = sub.campos.filter(c => {
+    const cfg = CAMPOS_CONFIG[c];
+    return cfg && cfg.req && !datos[c];
+  });
+  if (faltantes.length > 0) {
+    alert('Completá los campos obligatorios: ' + faltantes.map(f => CAMPOS_CONFIG[f]?.label).join(', '));
+    return;
+  }
+
+  // Generar observación final
+  const datosFecha = { ...datos };
+  if (datosFecha.fecha) datosFecha.fecha = formatDate(datosFecha.fecha);
+  if (datosFecha.fecha_hasta) datosFecha.fecha_hasta = formatDate(datosFecha.fecha_hasta);
+  let obs = sub.plantillaObs(datosFecha);
+  if (datos.curso_seccion) obs += ` Curso/Sección: ${datos.curso_seccion}.`;
+  if (datos.observaciones_extra) obs += ` ${datos.observaciones_extra}`;
+
+  const movimiento = {
+    tipoPrincipal: state.modalTipoPrincipal,
+    subtipoId: sub.id,
+    subtipoNum: sub.num,
+    subtipoTitulo: sub.titulo,
+    area: sub.area,
+    datos,
+    observacion: obs,
+  };
+
+  // Asignar ID único si no tiene
+  if (!movimiento.id) movimiento.id = generarId();
+
+  if (state.editandoIdx !== null) {
+    state.movimientos[state.editandoIdx] = movimiento;
+  } else {
+    state.movimientos.push(movimiento);
+  }
+
+  // Sincronizar con Google Sheets
+  guardarMovimientoEnSheets(movimiento);
+
+  cerrarModalDirecto();
+  renderMovimientosLista();
+}
+
+// ---- RENDERIZAR LISTA DE MOVIMIENTOS ----
+function renderMovimientosLista() {
+  const lista = document.getElementById('movimientos-lista');
+  const vacioMsg = document.getElementById('lista-vacia-msg');
+  const btn4 = document.getElementById('btn-paso4');
+  const btnExp = document.getElementById('btn-exportar');
+
+  if (state.movimientos.length === 0) {
+    lista.innerHTML = '';
+    lista.appendChild(vacioMsg || crearVacioMsg());
+    if (btn4) btn4.disabled = true;
+    if (btnExp) btnExp.disabled = true;
+    return;
+  }
+
+  if (btn4) btn4.disabled = false;
+  if (btnExp) btnExp.disabled = false;
+
+  lista.innerHTML = state.movimientos.map((m, i) => `
+    <div class="movimiento-card">
+      <div class="mov-card-left">
+        <div class="mov-card-top">
+          <span class="mov-numero">#${String(i+1).padStart(2,'0')}</span>
+          <span class="mov-tipo-badge badge-${m.tipoPrincipal}">${m.tipoPrincipal.charAt(0).toUpperCase() + m.tipoPrincipal.slice(1)}</span>
+          <span class="mov-area-badge ${areaClass(m.area)}">${m.area}</span>
+          ${m.datos.situacion ? `<span style="font-size:0.72rem;color:#718096">Rev. ${m.datos.situacion}</span>` : ''}
+        </div>
+        <div class="mov-docente">${m.datos.docente || '—'}</div>
+        <div class="mov-detalle">
+          ${m.datos.dni ? `DNI ${m.datos.dni}` : ''}${m.datos.secuencia ? ` · Sec. ${m.datos.secuencia}` : ''}
+          ${m.datos.categoria ? ` · Cat. ${m.datos.categoria}` : ''}
+          ${m.datos.horas ? ` · ${m.datos.horas} hs/móds.` : ''}
+        </div>
+        <div class="mov-obs">${m.observacion}</div>
+      </div>
+      <div class="mov-card-actions">
+        <button class="btn-edit-sm" onclick="abrirModal(${i})">Editar</button>
+        <button class="btn-danger" onclick="eliminarMovimiento(${i})">Eliminar</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function crearVacioMsg() {
+  const d = document.createElement('div');
+  d.id = 'lista-vacia-msg';
+  d.className = 'lista-vacia';
+  d.innerHTML = '<span class="lista-vacia-icon">📋</span><p>Aún no cargaste ningún movimiento.<br>Usá el botón para agregar.</p>';
+  return d;
+}
+
+function eliminarMovimiento(idx) {
+  if (!confirm('¿Eliminás este movimiento?')) return;
+  const mov = state.movimientos[idx];
+  if (mov && mov.id) eliminarMovimientoEnSheets(mov.id);
+  state.movimientos.splice(idx, 1);
+  renderMovimientosLista();
+}
+
+function areaClass(area) {
+  if (area === AREAS.LIQUIDACIONES) return 'area-liquidaciones';
+  if (area === AREAS.ENFERMEDADES)  return 'area-enfermedades';
+  if (area === AREAS.ASIGNACIONES)  return 'area-asignaciones';
+  return 'area-coordinacion';
+}
+
+// ---- RESUMEN (STEP 4) ----
+function renderResumen() {
+  const c = document.getElementById('resumen-container');
+  const inst = state.institucion;
+  const per = state.periodo;
+
+  c.innerHTML = `
+    <div class="resumen-card">
+      <div class="resumen-card-header">Datos de la Institución</div>
+      <div class="resumen-card-body">
+        ${resRow('Establecimiento', inst.nombre)}
+        ${resRow('N° Estab.', inst.numero)}
+        ${resRow('Distrito', `${inst.distrito}${inst.distNro ? ' (N° ' + inst.distNro + ')' : ''}`)}
+        ${resRow('Nivel / Modalidad', inst.nivel)}
+        ${resRow('% Subvención', inst.subvencion + '%')}
+        ${resRow('Director/a', inst.director)}
+        ${resRow('Área de destino', inst.area || 'Según tipo de movimiento')}
+      </div>
+    </div>
+
+    <div class="resumen-card">
+      <div class="resumen-card-header">Período</div>
+      <div class="resumen-card-body">
+        ${resRow('Mes/Año de la novedad', `${per.mesNombre} ${per.anio}`)}
+        ${resRow('Fecha de presentación', per.fechaPres || '—')}
+      </div>
+    </div>
+
+    <div class="resumen-card">
+      <div class="resumen-card-header">Movimientos (${state.movimientos.length})</div>
+      <div style="overflow-x:auto;">
+        <table class="resumen-movimientos-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Tipo</th>
+              <th>Docente</th>
+              <th>DNI</th>
+              <th>Cat.</th>
+              <th>Hs</th>
+              <th>Rev.</th>
+              <th>Área</th>
+              <th>Observación</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${state.movimientos.map((m, i) => `
+              <tr>
+                <td><span class="mov-numero">${i+1}</span></td>
+                <td><span class="mov-tipo-badge badge-${m.tipoPrincipal}" style="font-size:0.68rem">${m.tipoPrincipal}</span></td>
+                <td>${m.datos.docente || '—'}</td>
+                <td>${m.datos.dni || '—'}</td>
+                <td>${m.datos.categoria || '—'}</td>
+                <td>${m.datos.horas || '—'}</td>
+                <td>${m.datos.situacion || '—'}</td>
+                <td><span class="mov-area-badge ${areaClass(m.area)}" style="font-size:0.68rem">${m.area}</span></td>
+                <td style="font-size:0.78rem;max-width:220px">${m.observacion}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+}
+
+function resRow(label, val) {
+  return `<div class="resumen-row"><span class="resumen-label">${label}</span><span class="resumen-val">${val || '—'}</span></div>`;
+}
+
+// ---- EXPORTAR XLS ----
+function exportarXLS() {
+  const inst = state.institucion;
+  const per = state.periodo;
+  const movs = state.movimientos;
+
+  const wb = XLSX.utils.book_new();
+  const wsData = [];
+
+  // ---- FILA 1: Título ----
+  wsData.push([
+    'PROVINCIA DE BUENOS AIRES',
+    '', '', '', '',
+    'DIRECCIÓN GENERAL DE CULTURA Y EDUCACIÓN',
+    '', '', '', '',
+    'DIRECCIÓN PROVINCIAL DE EDUCACIÓN DE GESTIÓN PRIVADA',
+    '', '', ''
+  ]);
+
+  // ---- FILA 2: Encabezado planilla ----
+  wsData.push(['PLANILLA DE MOVIMIENTOS', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+
+  // ---- FILA 3: Datos institución ----
+  wsData.push([
+    'ESTABLECIMIENTO:', inst.nombre,
+    '', 'N°:', inst.numero,
+    'DISTRITO:', inst.distrito,
+    'N° DISTRITO:', inst.distNro || '',
+    'NIVEL:', inst.nivel,
+    '% SUBV.:', inst.subvencion + '%', ''
+  ]);
+
+  // ---- FILA 4: Período y área ----
+  const areaDestino = inst.area || 'Según tipo de movimiento';
+  wsData.push([
+    'PERÍODO:', `${per.mesNombre || ''} ${per.anio || ''}`,
+    '', 'ÁREA DE DESTINO:', areaDestino,
+    '', '', '', '',
+    'FECHA PRESENTACIÓN:', per.fechaPres || '',
+    '', '', ''
+  ]);
+
+  // ---- FILA 5: Vacía separadora ----
+  wsData.push([]);
+
+  // ---- FILA 6: CABECERAS DE COLUMNAS (según planilla oficial) ----
+  wsData.push([
+    'Col. 1\nAPELLIDO Y NOMBRE',       // 1
+    'Col. 2\nDNI',                       // 2
+    'Col. 3\nSECUENCIA',                // 3
+    'Col. 4\nSIT. REVISTA',             // 4
+    'Col. 5\nTIPO MOV.',                // 5
+    'Col. 6\nFECHA DESDE',              // 6
+    'Col. 7\nFECHA HASTA',              // 7
+    'Col. 8\nCATEGORÍA',               // 8
+    'Col. 9\nCURSO / TURNO',            // 9
+    'Col. 10\nJOR\nNADA',              // 10
+    'Col. 11\nCANT. HS\nO MÓDULOS',    // 11
+    'Col. 12\nANTIG.\nAÑOS',           // 12
+    'Col. 13\nANTIG.\nMESES',          // 13
+    'Col. 14\nOBSERVACIONES',           // 14
+  ]);
+
+  // ---- FILAS DE DATOS ----
+  movs.forEach((m, i) => {
+    const d = m.datos;
+
+    // Antigüedad: convertir años decimales a años/meses
+    let antigAnios = '';
+    let antigMeses = '';
+    if (d.antiguedad) {
+      const total = parseFloat(d.antiguedad);
+      antigAnios = Math.floor(total);
+      antigMeses = Math.round((total - antigAnios) * 12);
+    }
+
+    // Tipo de movimiento para col. 5
+    const tipoMov = {
+      alta: 'A',
+      baja: 'B',
+      modificacion: 'M',
+      asignacion: 'AF',
+    }[m.tipoPrincipal] || 'M';
+
+    wsData.push([
+      d.docente || '',                          // 1
+      d.dni || '',                               // 2
+      d.secuencia || d.secuencia_ant || '',      // 3
+      d.situacion || '',                         // 4
+      tipoMov,                                   // 5
+      d.fecha ? formatXLSDate(d.fecha) : '',    // 6
+      d.fecha_hasta ? formatXLSDate(d.fecha_hasta) : '', // 7
+      d.categoria || '',                         // 8
+      d.curso_seccion || '',                     // 9
+      '',                                        // 10 (jornada)
+      d.horas || '',                             // 11
+      antigAnios,                                // 12
+      antigMeses || '',                          // 13
+      m.observacion || '',                       // 14
+    ]);
+  });
+
+  // ---- FILAS VACÍAS ADICIONALES (para completar a mano si hace falta) ----
+  for (let i = 0; i < 5; i++) {
+    wsData.push(['', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+  }
+
+  // ---- FILA FINAL: Firma ----
+  wsData.push([]);
+  wsData.push([
+    'FIRMA Y SELLO DIRECTOR/A:', inst.director,
+    '', '', '', '', '',
+    'FIRMA Y SELLO INSPECTOR/A:', '',
+    '', '', '', '', ''
+  ]);
+
+  // ---- CREAR WORKSHEET ----
+  const ws = XLSX.utils.aoa_to_sheet(wsData);
+
+  // ---- ANCHOS DE COLUMNA ----
+  ws['!cols'] = [
+    { wch: 28 }, // A - Apellido y Nombre
+    { wch: 14 }, // B - DNI
+    { wch: 10 }, // C - Secuencia
+    { wch: 10 }, // D - Sit. Revista
+    { wch: 7  }, // E - Tipo Mov
+    { wch: 12 }, // F - Fecha desde
+    { wch: 12 }, // G - Fecha hasta
+    { wch: 10 }, // H - Categoría
+    { wch: 10 }, // I - Curso
+    { wch: 6  }, // J - Jornada
+    { wch: 8  }, // K - Hs/Módulos
+    { wch: 8  }, // L - Antig. Años
+    { wch: 8  }, // M - Antig. Meses
+    { wch: 55 }, // N - Observaciones
+  ];
+
+  // ---- ESTILOS via SheetJS (ce) ----
+  applyStyles(ws, wsData.length, movs.length);
+
+  // ---- AGREGAR HOJA ----
+  XLSX.utils.book_append_sheet(wb, ws, 'Planilla de Movimientos');
+
+  // ---- NOMBRE DEL ARCHIVO ----
+  const nombreArch = `PlanillaMovimientos_${inst.numero || 'INST'}_${per.anio || ''}${String(per.mes || '').padStart(2,'0')}.xlsx`;
+
+  // ---- DESCARGAR ----
+  XLSX.writeFile(wb, nombreArch);
+}
+
+function formatXLSDate(isoOrSlash) {
+  // Acepta dd/mm/yyyy o yyyy-mm-dd
+  if (!isoOrSlash) return '';
+  if (isoOrSlash.includes('/')) return isoOrSlash;
+  const [y, m, d] = isoOrSlash.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+function applyStyles(ws, totalRows, numMovs) {
+  // SheetJS CE no soporta estilos nativos, pero podemos usar
+  // el truco de definir !merges para las filas de encabezado
+
+  ws['!merges'] = [
+    // Fila 1: título principal (merge A1:N1)
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 13 } },
+    // Fila 2: subtítulo
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 13 } },
+    // Fila 3: datos institución — algunos merges
+    { s: { r: 2, c: 1 }, e: { r: 2, c: 3 } },  // nombre institución
+    // Fila 4: período
+    { s: { r: 3, c: 1 }, e: { r: 3, c: 2 } },  // período
+    { s: { r: 3, c: 5 }, e: { r: 3, c: 8 } },  // área
+    // Observaciones — merge para col 14 en cada fila de datos
+    ...Array.from({ length: numMovs }, (_, i) => ({
+      s: { r: 7 + i, c: 13 }, e: { r: 7 + i, c: 13 }
+    })),
+  ];
+
+  // Altura de fila para cabecera de columnas
+  ws['!rows'] = [
+    { hpt: 20 }, // fila 1
+    { hpt: 18 }, // fila 2
+    { hpt: 16 }, // fila 3
+    { hpt: 14 }, // fila 4
+    { hpt: 6  }, // fila 5 (separador)
+    { hpt: 36 }, // fila 6 (cabeceras — doble línea)
+    { hpt: 5  }, // fila 7 (vacía antes de datos)
+    ...Array.from({ length: numMovs + 5 }, () => ({ hpt: 18 })),
+  ];
+}
+
+// ---- RESET ----
+function resetApp() {
+  if (!confirm('¿Empezar una nueva planilla? Se perderán los datos actuales.')) return;
+  state = { step: 1, institucion: {}, periodo: {}, movimientos: [], modalTipoPrincipal: null, modalSubtipo: null, modalDatos: {}, editandoIdx: null };
+  // Reset campos
+  ['inst-nombre','inst-numero','inst-distrito','inst-distrito-num','inst-nivel',
+   'inst-subvencion','inst-director','inst-sello','inst-area',
+   'per-mes','per-anio','per-fecha-pres'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  renderMovimientosLista();
+  goToStep(1);
+  const btn = document.getElementById('btn-exportar');
+  if (btn) btn.disabled = true;
+}
+
+// ---- BOTONES HEADER ----
+document.getElementById('btn-nuevo').addEventListener('click', resetApp);
+document.getElementById('btn-exportar').addEventListener('click', exportarXLS);
+
+// ---- INIT ----
+renderMovimientosLista();
+
+// Autoguardado config — se ejecuta cuando el DOM ya está listo
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAutoguardadoConfig);
+} else {
+  initAutoguardadoConfig();
+}
+
+</script>
+</body>
+</html>
