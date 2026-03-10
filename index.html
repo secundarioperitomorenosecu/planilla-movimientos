@@ -1718,6 +1718,7 @@ function guardarMovimiento() {
 // ---- RENDERIZAR LISTA DE MOVIMIENTOS ----
 function renderMovimientosLista() {
   const lista = document.getElementById('movimientos-lista');
+  if (!lista) return; // DOM no listo todavía
   const vacioMsg = document.getElementById('lista-vacia-msg');
   const btn4 = document.getElementById('btn-paso4');
   const btnExp = document.getElementById('btn-exportar');
@@ -2687,6 +2688,7 @@ function guardarMovimiento() {
 // ---- RENDERIZAR LISTA DE MOVIMIENTOS ----
 function renderMovimientosLista() {
   const lista = document.getElementById('movimientos-lista');
+  if (!lista) return; // DOM no listo todavía
   const vacioMsg = document.getElementById('lista-vacia-msg');
   const btn4 = document.getElementById('btn-paso4');
   const btnExp = document.getElementById('btn-exportar');
