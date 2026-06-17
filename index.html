@@ -155,11 +155,18 @@ textarea{resize:vertical;min-height:70px}
   <div class="card">
     <div class="ctit">Identificación del establecimiento</div>
     <div class="g2">
-      <div class="campo s2"><label>Nombre del establecimiento <span class="req">*</span></label><input id="e-nom" placeholder="Ej: Colegio San Martín N° 1234"></div>
-      <div class="campo"><label>N° de establecimiento <span class="req">*</span></label><input id="e-num" placeholder="Ej: 1234"></div>
-      <div class="campo"><label>Distrito <span class="req">*</span></label><input id="e-dist" placeholder="Ej: La Plata"></div>
+      <div class="campo s2"><label>Nombre del establecimiento <span class="req">*</span></label><input id="e-nom" placeholder="Ej: Colegio San Martín N° 1234" readonly></div>
+      <div class="campo"><label>N° de establecimiento <span class="req">*</span></label>
+        <select id="e-num" onchange="onEstablecimientoChange()">
+          <option value="">— Seleccionar —</option>
+          <option value="3185">3185</option>
+          <option value="3187">3187</option>
+          <option value="3189">3189</option>
+        </select>
+      </div>
+      <div class="campo"><label>Distrito <span class="req">*</span></label><input id="e-dist" placeholder="Ej: La Plata" readonly></div>
       <div class="campo"><label>Nivel educativo <span class="req">*</span></label>
-        <select id="e-nivel" onchange="cargarDocentesDelNivel()"><option value="">— Seleccionar —</option><option value="Inicial">Nivel Inicial</option><option value="Primario">Nivel Primario</option><option value="Secundario">Nivel Secundario</option><option value="Superior">Nivel Superior</option></select></div>
+        <select id="e-nivel" onchange="cargarDocentesDelNivel()" disabled><option value="">— Seleccionar N° primero —</option><option value="Inicial">Nivel Inicial</option><option value="Primario">Nivel Primario</option><option value="Secundario">Nivel Secundario</option><option value="Superior">Nivel Superior</option></select></div>
       <div class="campo"><label>Mes / Año de la novedad <span class="req">*</span></label><input type="month" id="e-mes" onchange="cargarDocentesDelNivel()"></div>
     </div>
   </div>
@@ -339,7 +346,9 @@ textarea{resize:vertical;min-height:70px}
   <div class="card" id="card-reem" style="display:none">
     <div class="ctit">Docente reemplazado/titular en licencia</div>
     <div class="g3">
-      <div class="campo s2"><label>Apellido y nombre <span class="req">*</span></label><input id="r-nom" placeholder="APELLIDO, Nombre"></div>
+      <div class="campo s2"><label>Apellido y nombre <span class="req">*</span></label>
+        <input id="r-nom" list="lista-docentes" placeholder="Empezá a escribir para buscar..." autocomplete="off" oninput="onReemplazadoInput()">
+      </div>
       <div class="campo"><label>DNI <span class="req">*</span></label><input id="r-dni" placeholder="Ej: 25.678.901"></div>
       <div class="campo"><label>N° Secuencia <span class="req">*</span></label><input id="r-sec" placeholder="Ej: 002"></div>
       <div class="campo"><label>Artículo licencia / Telegrama N°</label><input id="r-tel" placeholder="Ej: 12345678 / Art. 114°a.1"></div>
@@ -1281,6 +1290,55 @@ async function eliminarDocenteModal(idx) {
     alert('No se pudo conectar con Google Sheets.');
   }
 }
+
+// ── DATOS FIJOS DE LA INSTITUCIÓN POR N° DE ESTABLECIMIENTO ────────────────────
+const DATOS_ESTABLECIMIENTO = {
+  '3185': { nombre:'Colegio Perito Moreno', distrito:'La Matanza', nivel:'Primario',
+            director:'KULCHIK CECILIA NOEMI',     dni:'25.358.841' },
+  '3187': { nombre:'Colegio Perito Moreno', distrito:'La Matanza', nivel:'Inicial',
+            director:'VIDES ANA CAROLINA',        dni:'31.824.255' },
+  '3189': { nombre:'Colegio Perito Moreno', distrito:'La Matanza', nivel:'Secundario',
+            director:'MELGAREJO COLMAN MELISA',   dni:'27.588.520' },
+};
+
+function onEstablecimientoChange() {
+  const num = document.getElementById('e-num')?.value;
+  const datos = DATOS_ESTABLECIMIENTO[num];
+  const selNivel = document.getElementById('e-nivel');
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+
+  if (!datos) {
+    set('e-nom', ''); set('e-dist', ''); set('d-nom', ''); set('d-dni', '');
+    if (selNivel) { selNivel.value = ''; selNivel.disabled = true; }
+    return;
+  }
+
+  set('e-nom', datos.nombre);
+  set('e-dist', datos.distrito);
+  set('d-nom', datos.director);
+  set('d-dni', datos.dni);
+
+  if (selNivel) {
+    selNivel.disabled = false;
+    selNivel.value = datos.nivel;
+    // Disparar la carga de docentes para ese nivel
+    cargarDocentesDelNivel();
+  }
+}
+
+
+function onReemplazadoInput() {
+  const valor = document.getElementById('r-nom')?.value || '';
+  const doc = docentesCache.find(d => d.nombre === valor);
+  if (!doc) return;
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('r-dni', doc.dni);
+  set('r-sec', doc.secuencia);
+  if (typeof actualizarObsPreview === 'function') actualizarObsPreview();
+}
+
 </script>
 
 </body>
