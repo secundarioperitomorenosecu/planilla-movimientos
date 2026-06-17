@@ -159,8 +159,8 @@ textarea{resize:vertical;min-height:70px}
       <div class="campo"><label>N° de establecimiento <span class="req">*</span></label><input id="e-num" placeholder="Ej: 1234"></div>
       <div class="campo"><label>Distrito <span class="req">*</span></label><input id="e-dist" placeholder="Ej: La Plata"></div>
       <div class="campo"><label>Nivel educativo <span class="req">*</span></label>
-        <select id="e-nivel"><option value="">— Seleccionar —</option><option value="Inicial">Nivel Inicial</option><option value="Primario">Nivel Primario</option><option value="Secundario">Nivel Secundario</option><option value="Superior">Nivel Superior</option></select></div>
-      <div class="campo"><label>Mes / Año de la novedad <span class="req">*</span></label><input type="month" id="e-mes"></div>
+        <select id="e-nivel" onchange="cargarDocentesDelNivel()"><option value="">— Seleccionar —</option><option value="Inicial">Nivel Inicial</option><option value="Primario">Nivel Primario</option><option value="Secundario">Nivel Secundario</option><option value="Superior">Nivel Superior</option></select></div>
+      <div class="campo"><label>Mes / Año de la novedad <span class="req">*</span></label><input type="month" id="e-mes" onchange="cargarDocentesDelNivel()"></div>
     </div>
   </div>
 
@@ -238,11 +238,17 @@ textarea{resize:vertical;min-height:70px}
 <!-- ══ PASO 3 ══ -->
 <section class="seccion" id="p3">
   <div class="sh"><h2>Datos del docente</h2><p>Columnas 1 al 4 y cargo (5–9) de la planilla oficial.</p></div>
+  <div style="margin-bottom:14px">
+    <button type="button" class="btn bs" onclick="abrirGestorDocentes()" style="font-size:13px;padding:6px 14px">📋 Gestionar agenda de docentes</button>
+  </div>
 
   <div class="card">
     <div class="ctit">Identificación</div>
     <div class="g3">
-      <div class="campo s2"><label>Apellido y Nombres <span class="req">*</span> <span class="ncol">Col.1</span></label><input id="dc-nom" placeholder="APELLIDO, Nombres"></div>
+      <div class="campo s2"><label>Apellido y Nombres <span class="req">*</span> <span class="ncol">Col.1</span></label>
+        <input id="dc-nom" list="lista-docentes" placeholder="Empezá a escribir para buscar..." autocomplete="off" oninput="onDocenteInput()">
+        <datalist id="lista-docentes"></datalist>
+      </div>
       <div class="campo"><label>DNI <span class="req">*</span> <span class="ncol">Col.2</span></label><input id="dc-dni" placeholder="Ej: 28.345.678"></div>
       <div class="campo"><label>Cargo/Secuencia <span class="ncol">Col.3</span></label><input id="dc-sec" placeholder="Ej: 005"></div>
       <div class="campo"><label>Situación de revista <span class="req">*</span> <span class="ncol">Col.4</span></label>
@@ -399,7 +405,7 @@ textarea{resize:vertical;min-height:70px}
 
 <script>
 // ── INTEGRACIÓN GOOGLE SHEETS ────────────────────────────────
-const GAS_URL   = "https://script.google.com/macros/s/AKfycbzV1h2E4EEI-IzaNNnVPBBllNvZJmAXJFtGGVN-woff4JRPYYXKMiZwaBIaIneB2_Xj/exec";
+const GAS_URL   = "https://script.google.com/macros/s/AKfycbytfDrG2wjquj6-m-JraK817sAqYHk-3DnuJWWTaSFZXyvZC7b0LUrWddV1OxC5zci_/exec";
 const GAS_CLAVE = "dipregep2025";
 
 function setSyncStatus(tipo, texto) {
@@ -600,19 +606,23 @@ function buildObs() {
   const art = g('m-art') || g('r-tel') || 'NNN';
   const hT = g('dc-hst') || 'nn';
   const sDoc = g('s-doc') || 'documentación correspondiente';
+  const dpNom = g('dc-nom') || 'APELLIDO Nombre';
+  const dpDni = g('dc-dni') || 'nn.nnn.nnn';
+  const sitRev = g('dc-rev') || '(indicar situación de revista)';
+  const motivo = g('obs-extra') || '(explicar causa)';
 
   if (tipo === 'alta') {
     const sub = g('a-sub') || st.aSub;
     const obs = {
       '1': `Alta a partir del ${fD} por nuevo aporte estatal.`,
       '2': `Alta a partir del ${fD} por crecimiento vegetativo.`,
-      '3': `Alta a partir del ${fD}. Continúa en igual cargo/horas que el año anterior. Revistaba como código P el año anterior.`,
+      '3': `Alta a partir del ${fD}. Continúa en igual cargo/horas que el año anterior. Secuencia ${rS}. Revistaba como código P el año anterior.`,
       '4': `Alta a partir del ${fD}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por renuncia. Telegrama N° ${rT}.`,
       '5': `Alta a partir del ${fD}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por despido. Telegrama N° ${rT}.`,
-      '6': `Alta a partir del ${fD}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por abandono de cargo. Telegrama N° ${rT}.`,
-      '7': `Alta a partir del ${fD}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por fallecimiento.`,
+      '6': `Alta a partir del ${fD}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por abandono de Cargo, Telegrama N° ${rT}.`,
+      '7': `Alta a partir del ${fD}. Reemplaza a ${rN}, DNI ${rD} Sec. ${rS} por fallecimiento.`,
       '8': `Alta a partir del ${fD}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por pase a DIPREGEP 20.`,
-      '28':`Alta desde ${fD} hasta ${fH}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} con licencia art. ${art}. Se adjunta: ${sDoc}.`,
+      '28':`Alta desde ${fD} hasta ${fH}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} con licencia art. ${art}. Se adjunta: (nómina de documentación correspondiente).`,
     };
     return obs[sub] || '';
   }
@@ -620,10 +630,10 @@ function buildObs() {
   if (tipo === 'baja') {
     const sub = g('b-sub') || st.bSub;
     const obs = {
-      '23r': `Baja a partir del ${fD} por renuncia. Telegrama N° ${rT}.`,
-      '23d': `Baja a partir del ${fD} por despido. Telegrama N° ${rT}.`,
+      '23r': `Baja a partir del ${fD} por Renuncia – Telegrama N° ${rT}.`,
+      '23d': `Baja a partir del ${fD} por Despido – Telegrama N° ${rT}.`,
       '23c': `Baja a partir del ${fD} por cierre de curso.`,
-      '23o': `Baja a partir del ${fD} por (indicar motivo y documentación).`,
+      '23o': `Baja a partir del ${fD} por (otros motivos, etc.).`,
       '24':  `Baja a partir del ${fD}. Revistaba como Provisorio el año anterior.`,
       '30':  `Baja a partir del ${fD} por finalización anticipada de suplencia.`,
     };
@@ -634,27 +644,32 @@ function buildObs() {
     const sub = g('m-sub') || st.mSub;
     const artM = g('m-art') || 'NNN';
     const obs = {
-      '9':  `Modifica a partir del ${fD}. Incrementa horas/módulos por nuevo aporte estatal (total en secuencia: ${hT} hs/módulos).`,
-      '10': `Modifica a partir del ${fD}. Incrementa horas/módulos por crecimiento vegetativo (total: ${hT} hs/módulos).`,
-      '11': `Modifica a partir del ${fD}. Incrementa horas/módulos. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por renuncia. Telegrama N° ${rT} (total: ${hT} hs).`,
-      '12': `Modifica a partir del ${fD}. Incrementa horas/módulos. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por despido. Telegrama N° ${rT} (total: ${hT} hs).`,
-      '13': `Modifica a partir del ${fD}. Incrementa horas/módulos. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por abandono de cargo. Telegrama N° ${rT} (total: ${hT} hs).`,
-      '14': `Modifica a partir del ${fD}. Incrementa horas/módulos. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por fallecimiento (total: ${hT} hs).`,
-      '15': `Modifica a partir del ${fD}. Incrementa horas/módulos. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por pase a DIPREGEP 20 (total: ${hT} hs).`,
+      '9':  `Modifica a partir del ${fD}. Incrementa ${hT} horas/módulos por nuevo aporte estatal (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '10': `Modifica a partir del ${fD}. Incrementa ${hT} horas/módulos por crecimiento vegetativo (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '11': `Modifica a partir del ${fD}. Incrementa ${hT} horas/módulos. Reemplaza a ${rN} DNI. ${rD} Sec. ${rS} por renuncia. Telegrama N° ${rT} (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '12': `Modifica a partir del ${fD}. Incrementa ${hT} horas/módulos. Reemplaza a ${rN}, DNI ${rD} Sec. ${rS} por despido. Telegrama N° ${rT} (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '13': `Modifica a partir del ${fD}. Incrementa ${hT} horas/módulos. Reemplaza a ${rN}, DNI ${rD} Sec. ${rS} por abandono de Cargo. Telegrama N° ${rT} (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '14': `Modifica a partir del ${fD}. Incrementa ${hT} horas/módulos. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por fallecimiento (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '15': `Modifica a partir del ${fD}. Incrementa ${hT} horas/módulos. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} por pase a DIPREGEP 20 (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
       '16': `Inactiva secuencia por licencia sin aporte a partir del ${fD}. Artículo ${artM}.`,
       '17': `Modifica fecha hasta ${fH}. Mantiene secuencia inactiva por licencia sin aporte. Artículo ${artM}.`,
       '18': `Modifica a partir del ${fD}. Activa secuencia por fin de licencia sin aporte. Artículo ${artM}.`,
-      '19': `Modifica antigüedad a partir del ${fD} (nueva antigüedad según cols. 12 y 13 de la planilla).`,
-      '20': `Modifica datos personales (DNI o Apellido y Nombres correctos).`,
-      '21': `Modifica Categoría a partir del ${fD} por (indicar causa).`,
-      '22': `Modifica Situación de revista a partir del ${fD}. Pasa a revistar con carácter de (indicar nueva situación y motivo).`,
-      '25': `Modifica a partir del ${fD}. Decrece en horas/módulos por renuncia parcial. Telegrama N° ${rT} (total: ${hT} hs).`,
-      '26': `Modifica a partir del ${fD}. Decrece horas/módulos por pase parcial a DIPREGEP 20 (total: ${hT} hs).`,
-      '27': `Modifica a partir del ${fD}. Decrece horas/módulos por licencia parcial sin aporte. Art. ${artM} (total: ${hT} hs).`,
-      '29': `Modifica fecha hasta ${fH}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} con licencia art. ${artM}.`,
+      '19': `Modifica antigüedad a partir del ${fD} (se considerará como nueva antigüedad la consignada en las columnas 12 y 13 de la planilla de movimientos). Se comenzará a pagar a partir del mes de ingreso de la planilla de movimientos.`,
+      '20': `Modifica datos personales (DNI o Apellido y Nombres correctos): ${dpNom}, DNI ${dpDni}. Para este tipo de modificación, en las columnas 1, 2 y 3 de la planilla de movimientos deben consignarse los datos tal y como figuran en la última Planilla de haberes emitida.`,
+      '21': `Modifica Categoría a partir del ${fD} por ${motivo}.`,
+      '22': `Modifica Situación de revista a partir del ${fD}. Pasa a revistar con carácter de ${sitRev} (colocar en la columna 4 de la planilla de movimientos la situación de revista que corresponda. Indicar motivo).`,
+      '25': `Modifica a partir del ${fD}. Decrece en ${hT} horas/módulos por renuncia parcial. Telegrama N° ${rT}. (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '26': `Modifica a partir del ${fD}. Decrece ${hT} horas/módulos por pase parcial a DIPREGEP 20 (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '27': `Modifica a partir del ${fD}. Decrece ${hT} horas/módulos por licencia parcial sin aporte. Art. ${artM}. (en la columna 11 de la planilla de movimientos debe figurar el número de horas que el docente pasa a poseer en total para esta secuencia a partir de la fecha indicada).`,
+      '29': `Modifica fecha hasta ${fH}. Reemplaza a ${rN}, DNI ${rD}. Sec. ${rS} con licencia art. ${artM}. Se adjunta: (nómina de documentación correspondiente. Incluye copia de movimiento anterior).`,
     };
     return obs[sub] || '';
   }
+
+  if (tipo === 'asignacion') {
+    return `Solicita Asignación Familiar. Se adjunta: ${sDoc}.`;
+  }
+
   return '';
 }
 
@@ -801,281 +816,177 @@ function nuevoMov() {
 // EXPORTAR XLS
 // ══════════════════════════════════════════
 async function exportXLS() {
-  const movs = st.movs.length ? st.movs : [getData()];
-  const base = movs[0];
-
-  // ── ExcelJS: crear workbook con estilos completos ────────────────────────
   const ExcelJS = window.ExcelJS;
+  if (!ExcelJS) { alert('La librería de exportación no cargó. Revisá tu conexión a internet.'); return; }
+
+  const movs = st.movs;
+  const base = getData();
+
   const wb = new ExcelJS.Workbook();
-  wb.creator = 'DIPREGEP Planilla de Movimientos';
   const ws = wb.addWorksheet('Planilla de Movimientos', {
     pageSetup: { paperSize: 9, orientation: 'landscape', fitToPage: true, fitToWidth: 1 }
   });
+
+  const T = { style:'thin', color:{ argb:'FF000000' } };
+  const allB = { top:T, bottom:T, left:T, right:T };
+
+  function sc(col, row, opts={}) {
+    const cell = ws.getCell(row, col);
+    if (opts.v !== undefined) cell.value = opts.v;
+    cell.font = { name:'Arial', size:opts.sz||10, bold:!!opts.b, color:{ argb:opts.fc||'FF000000' } };
+    cell.alignment = { horizontal:opts.h||'center', vertical:opts.va||'center', wrapText:!!opts.wrap };
+    if (opts.fill)   cell.fill   = { type:'pattern', pattern:'solid', fgColor:{ argb:opts.fill } };
+    if (opts.border) cell.border = opts.border;
+    if (opts.allB)   cell.border = allB;
+    return cell;
+  }
+
+  function mc(c1,r1,c2,r2,opts={}) {
+    ws.mergeCells(r1,c1,r2,c2);
+    return sc(c1,r1,opts);
+  }
+
+  // Anchos columnas A-P
+  [8.43,4.0,20.1,3.66,3.0,15.44,3.33,3.43,3.43,3.55,9.55,7.33,3.33,3.43,8.43,19.1]
+    .forEach((w,i) => { ws.getColumn(i+1).width = w; });
+
+  // Alturas de fila
+  const alts = {4:13.8,5:12.75,6:12.75,7:12.75,8:16.5,9:21.75,10:16.5,11:30,
+                12:14.25,13:14.25,14:16.5,15:16.5,16:16.5,17:16.5};
+  Object.entries(alts).forEach(([r,h]) => { ws.getRow(Number(r)).height = h; });
 
   const areaLabel = {
     L:'LIQUIDACIONES', E:'LICENCIAS POR ENFERMEDAD',
     A:'ASIGNACIONES FAMILIARES', C:'COORDINACIÓN ADMINISTRATIVA'
   };
 
-  // ── Helpers de estilo ────────────────────────────────────────────────────
-  const thinBorder = { style: 'thin', color: { argb: 'FF000000' } };
-  const allBorders = { top: thinBorder, bottom: thinBorder, left: thinBorder, right: thinBorder };
+  const mesAnio = base.eMes
+    ? new Date(base.eMes + '-01').toLocaleDateString('es-AR',{month:'long',year:'numeric'})
+    : '';
 
-  function setRow(rowNum, values) {
-    const row = ws.getRow(rowNum);
-    values.forEach((v, i) => { if (v !== undefined) row.getCell(i + 1).value = v; });
-    row.commit();
-    return row;
-  }
+  // FILA 4: Título
+  mc(1,4,16,4, { v:'PLANILLA DE MOVIMIENTO.', b:true, sz:11, h:'center' });
 
-  function styleCell(col, row, opts = {}) {
-    const cell = ws.getCell(row, col);
-    if (opts.value !== undefined) cell.value = opts.value;
-    cell.font = { name: 'Arial', size: opts.size || 10, bold: !!opts.bold, color: { argb: opts.color || 'FF000000' } };
-    cell.alignment = { horizontal: opts.h || 'center', vertical: opts.v || 'center', wrapText: !!opts.wrap };
-    if (opts.fill) cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: opts.fill } };
-    if (opts.borders) cell.border = opts.borders;
-    else if (opts.allB) cell.border = allBorders;
-  }
+  // FILA 5: ALTAS|BAJAS + AREA con recuadro
+  mc(3,5,11,5, { v:'…………………………...……...ALTAS   |   BAJAS   |   MODIFICACIONES   |   ADICIONALES', sz:8, h:'center', va:'bottom' });
+  mc(13,5,16,6, { v:'AREA:   '+(areaLabel[base.area]||''), b:true, sz:10, h:'left', va:'center', allB:true });
 
-  function mergeStyle(col1, row1, col2, row2, opts = {}) {
-    ws.mergeCells(row1, col1, row2, col2);
-    styleCell(col1, row1, opts);
-  }
+  // FILA 6: Tachar
+  mc(5,6,11,6, { v:'………....(TACHAR LO QUE NO CORRESPONDA).', sz:6, h:'center', va:'top' });
 
-  // ── Anchos de columna ────────────────────────────────────────────────────
-  // Columnas: A=idx, B=col1DNI, C=col2Sec, D=col3Nombre, E=col4Rev,
-  //           F=col5docTipo, G=col5docNum, H=col6Funcion, I=col7Rural,
-  //           J=col8Turno, K=col9Cat, L=col10Imp, M=col11Hs,
-  //           N=col12AnioA, O=col13AnioM, P=col14Obs, Q=col14ObsCont, R=firma
-  ws.columns = [
-    { key:'A', width: 4.14  },
-    { key:'B', width: 17.14 },
-    { key:'C', width: 3.85  },
-    { key:'D', width: 20.13 },
-    { key:'E', width: 3.56  },
-    { key:'F', width: 6.0   },
-    { key:'G', width: 14.85 },
-    { key:'H', width: 3.56  },
-    { key:'I', width: 4.5   },
-    { key:'J', width: 5.0   },
-    { key:'K', width: 4.85  },
-    { key:'L', width: 13.28 },
-    { key:'M', width: 3.85  },
-    { key:'N', width: 3.42  },
-    { key:'O', width: 3.99  },
-    { key:'P', width: 16.99 },
-    { key:'Q', width: 19.14 },
-    { key:'R', width: 3.85  },
-    { key:'S', width: 6.13  },
-  ];
+  // FILA 7: Mes/año
+  sc(12,7, { v:'Mes/año:', sz:8, h:'right', va:'bottom' });
+  mc(13,7,16,7, { v:mesAnio, sz:10, h:'left', va:'bottom', border:{ bottom:T } });
 
-  // ── Alturas de fila ──────────────────────────────────────────────────────
-  ws.getRow(4).height  = 15.75;
-  ws.getRow(5).height  = 12.75;
-  ws.getRow(6).height  = 12.75;
-  ws.getRow(7).height  = 12.75;
-  ws.getRow(8).height  = 16.5;
-  ws.getRow(9).height  = 21.75;
-  ws.getRow(10).height = 16.5;
-  ws.getRow(11).height = 30.0;
-  for (let r = 12; r <= 17; r++) ws.getRow(r).height = r <= 13 ? 14.25 : 16.5;
+  // FILA 8: Distrito / N°
+  mc(1,8,4,8, { v:'Distrito:   '+(base.eDist||''), sz:10, h:'left', va:'bottom', border:{ bottom:T } });
+  sc(5,8, { v:'N°', sz:10, h:'left', va:'bottom' });
+  sc(6,8, { v:base.eNum||'', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
+  mc(8,8,10,8, { v:'Región Nº', b:true, sz:13, h:'left', va:'bottom' });
 
-  // ── FILAS 1-3: Logo / encabezado institucional ─────────────────────────────
-  ws.mergeCells(1, 1, 3, 13);
-  const logoCell = ws.getCell(1, 1);
-  logoCell.value = 'PROVINCIA DE BUENOS AIRES';
-  logoCell.font = { name:'Arial', size:9, color:{ argb:'FF000000' } };
-  logoCell.alignment = { horizontal:'left', vertical:'center' };
+  // FILA 9: Establecimiento
+  sc(1,9, { v:'     Establecimiento:', sz:10, h:'right', va:'bottom', border:{ bottom:T } });
+  mc(2,9,10,9, { v:base.eNom||'', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
+  sc(11,9, { v:'N°', sz:10, h:'right', va:'bottom' });
+  mc(12,9,13,9, { v:base.eNum||'', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
+  sc(15,9, { v:'Porcentaje:', sz:10, h:'right', va:'bottom' });
+  sc(16,9, { v:(base.eSubv||'')+'%', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
 
-  ws.mergeCells(1, 14, 2, 19);
-  const dgcCell = ws.getCell(1, 14);
-  dgcCell.value = 'Dirección General de
-Cultura y Educación';
-  dgcCell.font = { name:'Arial', size:11, bold:true, color:{ argb:'FF1A3A5C' } };
-  dgcCell.alignment = { horizontal:'center', vertical:'center', wrapText:true };
+  // FILAS 10-11: Encabezado tipo movimiento
+  mc(1,10,2,11,   { v:'BAJAS y MODIFICACIONES.', b:true, sz:10, h:'center', va:'justify', allB:true });
+  mc(3,10,3,11,   { v:'ALTAS,  BAJAS,  MODIFICACIONES y ADICIONALES.', b:true, sz:10, h:'center', va:'justify', allB:true });
+  mc(4,10,6,11,   { v:'ALTAS y ADICIONALES.', b:true, sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(7,10,14,11,  { v:'ALTAS, MODIFICACIONES y ADICIONALES.', b:true, sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(15,10,16,11, { v:'ALTAS, BAJAS, MODIFICACIONES y ADICIONALES.', b:true, sz:10, h:'center', va:'justify', allB:true });
 
-  ws.mergeCells(3, 14, 3, 19);
-  const baCell = ws.getCell(3, 14);
-  baCell.value = 'Buenos Aires LA PROVINCIA';
-  baCell.font = { name:'Arial', size:13, bold:true, color:{ argb:'FF1A3A5C' } };
-  baCell.alignment = { horizontal:'center', vertical:'center' };
+  // FILAS 12-16: Cabeceras
+  mc(1,12,2,13,   { v:'Según anterior planilla de haberes.', sz:10, h:'center', va:'justify', allB:true });
+  mc(1,14,1,16,   { v:'…………………………………… Documento de Identidad. ………………………..……', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(2,14,2,16,   { v:'.Cargo o. Secuencia', sz:9, h:'center', va:'center', wrap:true, allB:true });
+  mc(3,12,3,16,   { v:'Apellido y Nombres.', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(4,12,4,16,   { v:'Sit. Revista', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(5,12,6,12,   { v:'DOCUMENTO', sz:10, h:'center', va:'center', border:{ top:T, left:T, right:T } });
+  sc(5,13, { v:1, sz:10, border:{ left:T } });
+  sc(6,13, { v:'Lib. Enrolamiento', sz:10, h:'left', border:{ right:T } });
+  sc(5,14, { v:2, sz:10, border:{ left:T } });
+  sc(6,14, { v:'Lib. Cívica.', sz:10, h:'left', border:{ right:T } });
+  sc(5,15, { v:3, sz:10, border:{ left:T } });
+  sc(6,15, { v:'Céd. Identidad.', sz:10, h:'left', border:{ right:T } });
+  sc(5,16, { v:4, sz:10, border:{ left:T, bottom:T } });
+  sc(6,16, { v:'D.N.I.', sz:10, h:'left', border:{ right:T, bottom:T } });
+  mc(7,12,7,16,   { v:'FUNCION', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(8,12,8,16,   { v:'RURAL', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(9,12,9,16,   { v:'TURNO', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(10,12,10,16, { v:'CATEGORIA', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(11,12,11,16, { v:'IMPORTE.', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(12,12,12,16, { v:'N° HORAS', sz:10, h:'center', va:'center', wrap:true, allB:true });
+  mc(13,12,14,12, { v:'Antigüedad', sz:7, h:'center', va:'center', border:{ top:T, left:T, right:T } });
+  sc(13,13, { v:'AÑOS', sz:10, h:'center', allB:true });
+  mc(13,14,13,16, { v:'', allB:true });
+  sc(14,13, { v:'MESES', sz:10, h:'center', allB:true });
+  mc(14,14,14,16, { v:'', allB:true });
+  mc(15,12,16,16, { v:'OBSERVACIONES.', sz:10, h:'center', va:'center', wrap:true, allB:true });
 
-  // ── FILA 4: Título ────────────────────────────────────────────────────────
-  mergeStyle(1,4, 17,4, { value:'PLANILLA DE MOVIMIENTO.', bold:true, size:11, h:'center', v:'bottom' });
-  styleCell(19,4, { value:'ANEXO II (a).', bold:true, size:14, h:'center', v:'center' });
+  // FILA 17: Números de columna
+  [[1,1],[2,2],[3,3],[4,4],[5,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13]]
+    .forEach(([col,num]) => sc(col,17, { v:num, sz:10, h:'center', allB:true }));
+  mc(15,17,16,17, { v:14, sz:10, h:'center', allB:true });
 
-  // ── FILA 5: Indicación ALTAS|BAJAS|MODIFICACIONES ────────────────────────
-  mergeStyle(4,5, 12,5, {
-    value:'ALTAS   |   BAJAS   |   MODIFICACIONES   |   ADICIONALES',
-    size:8, h:'center', v:'bottom', color:'FF000000'
+  // FILAS DE DATOS
+  const movsData = movs.length > 0 ? movs : [{}];
+  let filaActual = 18;
+
+  movsData.forEach(mov => {
+    const f1 = filaActual, f2 = filaActual + 1;
+    ws.getRow(f1).height = 13.2;
+    ws.getRow(f2).height = 30.6;
+
+    // Extraer código de categoría (ej: "DS" de "DS — Docente secundario")
+    const catCod = (mov.dcCat||'').split(/[\s—-]/)[0].trim();
+    const obs = mov._obs || mov.obs || '';
+
+    mc(1,f1,1,f2,   { v:mov.dcDni||'', sz:10, h:'center', va:'center', allB:true });
+    mc(2,f1,2,f2,   { v:mov.dcSec||'', sz:10, h:'center', va:'center', allB:true });
+    mc(3,f1,3,f2,   { v:mov.dcNom||'', sz:10, h:'left',   va:'center', allB:true });
+    mc(4,f1,4,f2,   { v:mov.dcRev||'', sz:10, h:'center', va:'center', allB:true });
+    mc(5,f1,5,f2,   { v:'4',           sz:10, h:'center', va:'center', allB:true }); // DNI
+    mc(6,f1,6,f2,   { v:mov.dcDni||'', sz:10, h:'center', va:'center', allB:true });
+    mc(7,f1,7,f2,   { v:catCod,        sz:10, h:'center', va:'center', allB:true });
+    mc(8,f1,8,f2,   { v:mov.rural||'', sz:10, h:'center', va:'center', allB:true });
+    mc(9,f1,9,f2,   { v:mov.dcTur||'', sz:10, h:'center', va:'center', allB:true });
+    mc(10,f1,10,f2, { v:catCod,        sz:10, h:'center', va:'center', allB:true });
+    mc(11,f1,11,f2, { v:'',            sz:10, h:'center', va:'center', allB:true });
+    mc(12,f1,12,f2, { v:mov.dcHst||mov.dcHs||'', sz:10, h:'center', va:'center', allB:true });
+    mc(13,f1,13,f2, { v:mov.dcAa||'', sz:10, h:'center', va:'center', allB:true });
+    mc(14,f1,14,f2, { v:mov.dcAm||'', sz:10, h:'center', va:'center', allB:true });
+    mc(15,f1,16,f2, { v:obs, sz:9, h:'left', va:'center', wrap:true, allB:true });
+
+    filaActual += 2;
   });
 
-  // ── FILA 6: Tachar lo que no corresponda ─────────────────────────────────
-  mergeStyle(6,6, 12,6, {
-    value:'(TACHAR LO QUE NO CORRESPONDA).',
-    size:6, h:'center', v:'top', color:'FF000000'
-  });
+  // Lugar y fecha
+  const fLugar = filaActual + 1;
+  ws.getRow(fLugar).height = 16.5;
+  mc(1,fLugar,16,fLugar, { v:'Lugar y fecha: ', sz:10, h:'left', va:'center' });
 
-  // ── FILA 7: Mes/año ───────────────────────────────────────────────────────
-  styleCell(13,7, { value:'Mes/año:', size:8, h:'right', v:'bottom' });
-  mergeStyle(16,7, 17,7, {
-    value: base.eMes || '',
-    size:10, h:'left', v:'bottom',
-    borders:{ bottom: thinBorder }
-  });
+  // Firmas
+  const fFirma = fLugar + 4;
+  ws.getRow(fFirma).height = 16.5;
+  mc(1,fFirma,2,fFirma,   { v:'Director/a.',                  sz:10, h:'center', allB:true });
+  mc(4,fFirma,6,fFirma,   { v:'Representante Legal.',          sz:10, h:'center', allB:true });
+  mc(9,fFirma,11,fFirma,  { v:'Inspector/a.',                  sz:10, h:'center', allB:true });
+  mc(15,fFirma,16,fFirma, { v:'Director/a Administrativo/a.', sz:10, h:'center', allB:true });
 
-  // ── FILA 8: Distrito / N° ─────────────────────────────────────────────────
-  styleCell(2,8, { value:'Distrito: ', size:10, h:'left', v:'bottom' });
-  mergeStyle(3,8, 5,8, { value: base.eDist || '', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
-  styleCell(6,8, { value:'N°', size:10, h:'general', v:'bottom' });
-  styleCell(7,8, { value:'', size:10, borders:{ bottom:thinBorder } });
-  styleCell(9,8, { value:'Región Nº', bold:true, size:13, h:'general', v:'bottom' });
-  styleCell(12,8, { value:'', borders:{ bottom:thinBorder } });
-
-  // ── FILA 9: Establecimiento ───────────────────────────────────────────────
-  styleCell(2,9, { value:'     Establecimiento:', size:10, h:'right', v:'bottom', borders:{ bottom:thinBorder } });
-  mergeStyle(3,9, 11,9, { value: base.eNom || '', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
-  styleCell(12,9, { value:'N°', size:10, h:'right', v:'bottom' });
-  mergeStyle(13,9, 14,9, { value: base.eNum || '', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
-  styleCell(16,9, { value:'Porcentaje:', size:10, h:'right', v:'bottom' });
-  styleCell(17,9, { value: (base.eSubv || '') + '%', size:10, h:'left', v:'bottom', borders:{ bottom:thinBorder } });
-
-  // ── FILAS 5-6: AREA con recuadro ──────────────────────────────────────────
-  ws.mergeCells(5, 16, 6, 19);
-  const areaCell = ws.getCell(5, 16);
-  areaCell.value = 'AREA:   ' + (areaLabel[base.area] || '');
-  areaCell.font = { name:'Arial', size:10, bold:true, color:{ argb:'FF000000' } };
-  areaCell.alignment = { horizontal:'left', vertical:'center' };
-  areaCell.border = { top:thinBorder, bottom:thinBorder, left:thinBorder, right:thinBorder };
-
-  // ── FILAS 10-11: Encabezado tipo movimiento ───────────────────────────────
-  mergeStyle(2,10, 3,11, { value:'BAJAS y MODIFICACIONES.', bold:true, size:10, h:'center', v:'bottom', wrap:true, allB:true });
-  mergeStyle(4,10, 4,11, { value:'ALTAS,  BAJAS,  MODIFICACIONES y ADICIONALES.', bold:true, size:10, h:'center', v:'bottom', wrap:true, allB:true });
-  mergeStyle(5,10, 7,11, { value:'ALTAS y ADICIONALES.', bold:true, size:10, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(8,10, 15,11,{ value:'ALTAS, MODIFICACIONES y ADICIONALES.', bold:true, size:10, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(16,10,17,11,{ value:'ALTAS, BAJAS, MODIFICACIONES y ADICIONALES.', bold:true, size:10, h:'center', v:'bottom', wrap:true, allB:true });
-
-  // ── FILAS 12-16: Cabeceras de columnas ───────────────────────────────────
-  // B12:C13 — "Según anterior planilla de haberes"
-  mergeStyle(2,12, 3,13, { value:'Según anterior planilla de haberes.', size:8, h:'center', v:'center', wrap:true, allB:true });
-  // B14:C16 — ref DNI/sec
-  mergeStyle(2,14, 3,16, { value:'…………… Documento de Identidad. …………………………..……', size:7, h:'center', v:'center', wrap:true, allB:true });
-  // D12:D16
-  mergeStyle(4,12, 4,16, { value:'Apellido y Nombres.', size:10, h:'center', v:'center', wrap:true, allB:true });
-  // E12:E16
-  mergeStyle(5,12, 5,16, { value:'Sit. Revista', size:9, h:'center', v:'center', wrap:true, allB:true });
-  // F12:G12
-  mergeStyle(6,12, 7,12, { value:'DOCUMENTO', size:9, h:'center', v:'center', borders:{left:thinBorder,right:thinBorder} });
-  // Opciones documento
-  [{r:13,n:'1',d:'Lib. Enrolamiento'},{r:14,n:'2',d:'Lib. Cívica.'},{r:15,n:'3',d:'Céd. Identidad.'},{r:16,n:'4',d:'D.N.I.'}].forEach(({r,n,d})=>{
-    styleCell(6,r, { value:n, size:8, h:'center', borders:{left:thinBorder, bottom:r===16?thinBorder:undefined} });
-    styleCell(7,r, { value:d, size:8, h:'left',   borders:{right:thinBorder, bottom:r===16?thinBorder:undefined} });
-  });
-  // H-O col headers
-  mergeStyle(8, 12, 8, 16, { value:'FUNCION',   size:9, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(9, 12, 9, 16, { value:'RURAL',     size:9, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(10,12,10,16, { value:'TURNO',     size:9, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(11,12,11,16, { value:'CATEGORIA', size:9, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(12,12,12,16, { value:'IMPORTE.',  size:9, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(13,12,13,16, { value:'N° HORAS',  size:9, h:'center', v:'center', wrap:true, allB:true });
-  mergeStyle(14,12,15,12, { value:'Antigüedad',size:9, h:'center', v:'center', allB:true });
-  mergeStyle(14,13,14,16, { value:'AÑOS',      size:8, h:'center', v:'center', allB:true });
-  mergeStyle(15,13,15,16, { value:'MESES',     size:8, h:'center', v:'center', allB:true });
-  mergeStyle(16,12,17,16, { value:'OBSERVACIONES.', size:10, h:'center', v:'center', wrap:true, allB:true });
-
-  // ── FILA 17: Numeración ───────────────────────────────────────────────────
-  ws.getRow(17).height = 12.75;
-  [[2,1],[3,2],[4,3],[5,4],[6,5],[7,''],[8,6],[9,7],[10,8],[11,9],[12,10],[13,11],[14,12],[15,13]].forEach(([c,v])=>{
-    styleCell(c,17, { value:v, size:9, h:'center', v:'center', allB:true });
-  });
-  styleCell(16,17, { value:14, size:9, h:'center', v:'center', borders:{left:thinBorder,top:thinBorder,bottom:thinBorder} });
-  styleCell(17,17, { value:'',  borders:{right:thinBorder,top:thinBorder,bottom:thinBorder} });
-
-  // ── FILAS DE DATOS ────────────────────────────────────────────────────────
-  const DATA_START = 18;
-  const MIN_ROWS = 9;
-  const totalMovs = Math.max(movs.length, MIN_ROWS);
-
-  for (let i = 0; i < totalMovs; i++) {
-    const r1 = DATA_START + i * 2;
-    const r2 = r1 + 1;
-    ws.getRow(r1).height = 12.75;
-    ws.getRow(r2).height = 12.75;
-
-    const m = i < movs.length ? movs[i] : {};
-    const fmtFecha = (iso) => {
-      if (!iso) return '';
-      const [y,mo,d] = iso.split('-');
-      return d && mo && y ? `${d}/${mo}/${y}` : iso;
-    };
-    const fechaObs = m.mvDe ? fmtFecha(m.mvDe) + (m.mvHs ? ` al ${fmtFecha(m.mvHs)}` : '') : '';
-
-    // Col B (1): DNI
-    mergeStyle(2,r1,2,r2, { value:m.dcDni||'', size:9, h:'center', v:'center', allB:true });
-    // Col C (2): Secuencia
-    mergeStyle(3,r1,3,r2, { value:m.dcSec||'', size:9, h:'center', v:'center', allB:true });
-    // Col D (3): Apellido y Nombres
-    mergeStyle(4,r1,4,r2, { value:m.dcNom||'', size:9, h:'left', v:'center', wrap:true, allB:true });
-    // Col E (4): Situación de Revista
-    mergeStyle(5,r1,5,r2, { value:m.dcRev||'', size:9, h:'center', v:'center', allB:true });
-    // Col F (5): tipo doc (siempre 4=DNI)
-    mergeStyle(6,r1,6,r2, { value:'4', size:9, h:'center', v:'center', allB:true });
-    // Col G: N° doc
-    mergeStyle(7,r1,7,r2, { value:m.dcDni||'', size:9, h:'center', v:'center', allB:true });
-    // Col H (6): Función
-    mergeStyle(8,r1,8,r2, { value:'', size:9, h:'center', v:'center', allB:true });
-    // Col I (7): Rural
-    mergeStyle(9,r1,9,r2, { value:'', size:9, h:'center', v:'center', allB:true });
-    // Col J (8): Turno
-    mergeStyle(10,r1,10,r2, { value:m.dcTur||'', size:9, h:'center', v:'center', allB:true });
-    // Col K (9): Categoría
-    mergeStyle(11,r1,11,r2, { value:m.dcCat||'', size:9, h:'center', v:'center', allB:true });
-    // Col L (10): Importe (vacío)
-    mergeStyle(12,r1,12,r2, { value:'', size:9, h:'center', v:'center', allB:true });
-    // Col M (11): N° Horas
-    mergeStyle(13,r1,13,r2, { value:m.dcHst||m.dcHs||'', size:9, h:'center', v:'center', allB:true });
-    // Col N (12): Antigüedad Años
-    mergeStyle(14,r1,14,r2, { value:m.dcAa||'', size:9, h:'center', v:'center', allB:true });
-    // Col O (13): Antigüedad Meses
-    mergeStyle(15,r1,15,r2, { value:m.dcAm||'', size:9, h:'center', v:'center', allB:true });
-    // Col P:Q (14): Observaciones
-    mergeStyle(16,r1,17,r2, { value:m.obs||'', size:8, h:'left', v:'center', wrap:true, allB:true });
-  }
-
-  // ── Lugar y fecha ─────────────────────────────────────────────────────────
-  const lastRow = DATA_START + totalMovs * 2;
-  ws.getRow(lastRow + 2).height = 12.75;
-  styleCell(2, lastRow+2, { value:'Lugar y fecha:', size:10, h:'left', v:'bottom' });
-
-  // ── Firmas ────────────────────────────────────────────────────────────────
-  const fL = lastRow + 6;  // línea firma
-  const fT = lastRow + 7;  // texto firma
-  ws.getRow(fL).height = 12.75;
-  ws.getRow(fT).height = 12.75;
-
-  // Líneas de firma
-  mergeStyle(2,fL,3,fL,   { value:'', borders:{bottom:thinBorder} });
-  mergeStyle(5,fL,7,fL,   { value:'', borders:{bottom:thinBorder} });
-  mergeStyle(10,fL,12,fL, { value:'', borders:{bottom:thinBorder} });
-  mergeStyle(16,fL,17,fL, { value:'', borders:{bottom:thinBorder} });
-
-  // Labels
-  styleCell(2,fT,  { value:'Director/a.', size:9, h:'center', v:'top' });
-  mergeStyle(5,fT,7,fT,   { value:'Representante Legal.', size:9, h:'center', v:'top', borders:{top:thinBorder} });
-  mergeStyle(10,fT,12,fT, { value:'Inspector/a.', size:9, h:'center', v:'top', borders:{top:thinBorder} });
-  mergeStyle(16,fT,17,fT, { value:'Director/a Administrativo/a.', size:9, h:'center', v:'top', borders:{top:thinBorder} });
-
-  // ── Generar y descargar ───────────────────────────────────────────────────
-  const ts = new Date();
-  const fname = `PlanillaMovimientos_${base.eNum||'EST'}_${ts.getFullYear()}${String(ts.getMonth()+1).padStart(2,'0')}.xlsx`;
-  const buffer = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buffer], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url; a.download = fname; a.click();
-  URL.revokeObjectURL(url);
+  // Exportar y guardar historial
   guardarHistorialEnSheets();
+  const buf  = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  const nivel = document.getElementById('e-nivel')?.value || 'planilla';
+  const mes   = (document.getElementById('e-mes')?.value || '').replace('-','');
+  a.href = url; a.download = `PlanillaMovimientos_${nivel}_${mes}.xlsx`;
+  a.click(); URL.revokeObjectURL(url);
 }
 
 function buildSheet(base, movs) {
@@ -1153,6 +1064,224 @@ function buildSheet(base, movs) {
 // INIT
 // ══════════════════════════════════════════
 document.getElementById('e-mes').value = new Date().toISOString().slice(0,7);
+
+// ── AGENDA DE DOCENTES (autocompletado con antigüedad dinámica) ────────────────
+let docentesCache = [];
+
+async function cargarDocentesDelNivel() {
+  const nivel = document.getElementById('e-nivel')?.value;
+  if (!nivel) { docentesCache = []; return; }
+  try {
+    const mesInput = document.getElementById('e-mes')?.value || '';
+  const mesAnio = mesInput ? mesInput.split('-').reverse().join('/').replace(/^(\d{2})\/(\d{4})$/, '$1/$2') : '';
+  const res = await fetch(`${GAS_URL}?clave=${GAS_CLAVE}&accion=leerDocentes&nivel=${encodeURIComponent(nivel)}&mesAnio=${encodeURIComponent(mesAnio)}`);
+    const json = await res.json();
+    if (json.ok) {
+      docentesCache = json.docentes || [];
+      const dl = document.getElementById('lista-docentes');
+      if (dl) {
+        dl.innerHTML = docentesCache
+          .map(d => `<option value="${d.nombre}">DNI ${d.dni} · Sec. ${d.secuencia} · ${d.categoria}</option>`)
+          .join('');
+      }
+    }
+  } catch(e) { /* silencioso, la búsqueda queda manual */ }
+}
+
+function onDocenteInput() {
+  const valor = document.getElementById('dc-nom')?.value || '';
+  const doc = docentesCache.find(d => d.nombre === valor);
+  if (!doc) return;
+
+  const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+  set('dc-dni', doc.dni);
+  set('dc-sec', doc.secuencia);
+  const selCat = document.getElementById('dc-cat');
+  if (selCat) {
+    for (const opt of selCat.options) {
+      if (opt.value.split(/[\s—-]/)[0] === doc.categoria) { selCat.value = opt.value; break; }
+    }
+  }
+  const selRev = document.getElementById('dc-rev');
+  if (selRev) {
+    for (const opt of selRev.options) {
+      if (opt.value.toLowerCase().includes(doc.revista.toLowerCase())) { selRev.value = opt.value; break; }
+    }
+  }
+  set('dc-aa', doc.antiguedadAnos);
+  set('dc-am', doc.antiguedadMeses);
+  if (typeof actualizarObsPreview === 'function') actualizarObsPreview();
+}
+
 </script>
+
+<!-- ══ MODAL: Gestor de Docentes ══ -->
+<div id="modal-docentes" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:1000;align-items:center;justify-content:center">
+  <div style="background:#fff;border-radius:10px;max-width:780px;width:94%;max-height:88vh;overflow:auto;padding:24px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <h3 style="margin:0;font-size:18px;color:#1a3a5c">Agenda de docentes — <span id="md-nivel-label">—</span></h3>
+      <button type="button" onclick="cerrarGestorDocentes()" style="background:none;border:none;font-size:22px;cursor:pointer;color:#666">×</button>
+    </div>
+
+    <!-- Formulario alta/edición -->
+    <div class="card" style="margin-bottom:16px">
+      <div class="ctit" id="md-form-titulo">Agregar nuevo docente</div>
+      <div class="g3">
+        <div class="campo s2"><label>Apellido y Nombre</label><input id="md-nombre" placeholder="APELLIDO Nombre"></div>
+        <div class="campo"><label>DNI</label><input id="md-dni" placeholder="Ej: 28345678"></div>
+        <div class="campo"><label>N° Secuencia</label><input id="md-sec" placeholder="Ej: 005"></div>
+        <div class="campo"><label>Categoría</label><input id="md-cat" placeholder="Ej: MA, DS, PR..."></div>
+        <div class="campo"><label>Situación de Revista</label>
+          <select id="md-rev">
+            <option value="Titular">Titular</option>
+            <option value="Provisorio">Provisorio</option>
+            <option value="Suplente">Suplente</option>
+          </select>
+        </div>
+        <div class="campo"><label>Antigüedad años (a la fecha ref.)</label><input id="md-anos" type="number" min="0" placeholder="Ej: 3"></div>
+        <div class="campo"><label>Antigüedad meses (a la fecha ref.)</label><input id="md-meses" type="number" min="0" max="11" placeholder="Ej: 7"></div>
+        <div class="campo"><label>Mes/Año de referencia</label><input id="md-mesref" type="month"></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:10px">
+        <button type="button" class="btn bp" onclick="guardarDocenteDesdeApp()">💾 Guardar docente</button>
+        <button type="button" class="btn bs" id="md-btn-cancelar" style="display:none" onclick="cancelarEdicionDocente()">Cancelar edición</button>
+      </div>
+    </div>
+
+    <!-- Lista de docentes -->
+    <div class="ctit" style="margin-bottom:8px">Docentes cargados</div>
+    <input id="md-buscar" placeholder="Buscar por nombre..." oninput="renderListaDocentesModal()" style="margin-bottom:10px;width:100%">
+    <div id="md-lista" style="border:1px solid #e2e8f0;border-radius:6px;max-height:320px;overflow:auto"></div>
+  </div>
+</div>
+
+<script>
+// ── GESTOR DE DOCENTES (modal: alta, edición, baja) ────────────────────────────
+let docenteEditandoIdx = null;
+
+function abrirGestorDocentes() {
+  const nivel = document.getElementById('e-nivel')?.value;
+  if (!nivel) { alert('Primero seleccioná el nivel en el Paso 1.'); return; }
+  document.getElementById('md-nivel-label').textContent = nivel;
+  document.getElementById('modal-docentes').style.display = 'flex';
+  renderListaDocentesModal();
+}
+
+function cerrarGestorDocentes() {
+  document.getElementById('modal-docentes').style.display = 'none';
+  cancelarEdicionDocente();
+}
+
+function renderListaDocentesModal() {
+  const cont = document.getElementById('md-lista');
+  const filtro = (document.getElementById('md-buscar')?.value || '').toLowerCase();
+  const lista = docentesCache.filter(d => d.nombre.toLowerCase().includes(filtro));
+
+  if (lista.length === 0) {
+    cont.innerHTML = '<div style="padding:16px;text-align:center;color:#888;font-size:13px">No hay docentes cargados todavía.</div>';
+    return;
+  }
+
+  cont.innerHTML = lista.map((d, i) => {
+    const idxReal = docentesCache.indexOf(d);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #eee;font-size:13px">
+      <div>
+        <strong>${d.nombre}</strong><br>
+        <span style="color:#666">DNI ${d.dni} · Sec. ${d.secuencia} · ${d.categoria} · ${d.revista} · Antig. ${d.antiguedadAnos}a ${d.antiguedadMeses}m</span>
+      </div>
+      <div style="display:flex;gap:6px;flex-shrink:0">
+        <button type="button" onclick="editarDocenteModal(${idxReal})" style="border:1px solid #1a3a5c;background:#fff;color:#1a3a5c;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:12px">Editar</button>
+        <button type="button" onclick="eliminarDocenteModal(${idxReal})" style="border:1px solid #c53030;background:#fff;color:#c53030;border-radius:5px;padding:4px 10px;cursor:pointer;font-size:12px">Eliminar</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editarDocenteModal(idx) {
+  const d = docentesCache[idx];
+  if (!d) return;
+  docenteEditandoIdx = idx;
+  document.getElementById('md-form-titulo').textContent = 'Editando: ' + d.nombre;
+  document.getElementById('md-nombre').value = d.nombre;
+  document.getElementById('md-dni').value = d.dni;
+  document.getElementById('md-sec').value = d.secuencia;
+  document.getElementById('md-cat').value = d.categoria;
+  document.getElementById('md-rev').value = d.revista;
+  document.getElementById('md-anos').value = d.antiguedadAnos;
+  document.getElementById('md-meses').value = d.antiguedadMeses;
+  // Mes de referencia: usamos el mes actualmente cargado en el Paso 1 como referencia de edición
+  document.getElementById('md-mesref').value = document.getElementById('e-mes')?.value || '';
+  document.getElementById('md-btn-cancelar').style.display = '';
+}
+
+function cancelarEdicionDocente() {
+  docenteEditandoIdx = null;
+  ['md-nombre','md-dni','md-sec','md-cat','md-anos','md-meses','md-mesref'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+  document.getElementById('md-rev').value = 'Titular';
+  document.getElementById('md-form-titulo').textContent = 'Agregar nuevo docente';
+  document.getElementById('md-btn-cancelar').style.display = 'none';
+}
+
+async function guardarDocenteDesdeApp() {
+  const nivel = document.getElementById('e-nivel')?.value;
+  const nombre = document.getElementById('md-nombre').value.trim();
+  const dni    = document.getElementById('md-dni').value.trim();
+  if (!nivel || !nombre || !dni) { alert('Completá al menos Nombre y DNI.'); return; }
+
+  const mesRefRaw = document.getElementById('md-mesref').value;
+  const mesAnioRef = mesRefRaw ? mesRefRaw.split('-').reverse().join('/') : (document.getElementById('e-mes')?.value || '').split('-').reverse().join('/');
+
+  const data = {
+    nivel, nombre, dni,
+    secuencia: document.getElementById('md-sec').value.trim(),
+    categoria: document.getElementById('md-cat').value.trim(),
+    revista:   document.getElementById('md-rev').value,
+    anosRef:   Number(document.getElementById('md-anos').value) || 0,
+    mesesRef:  Number(document.getElementById('md-meses').value) || 0,
+    mesAnioRef
+  };
+
+  try {
+    const res  = await fetch(GAS_URL, { method:'POST', body: JSON.stringify({ clave:GAS_CLAVE, accion:'guardarDocente', data }) });
+    const json = await res.json();
+    if (json.ok) {
+      await cargarDocentesDelNivel();
+      renderListaDocentesModal();
+      cancelarEdicionDocente();
+      setSyncStatus('ok', 'Docente guardado ✓');
+    } else {
+      alert('Error al guardar: ' + json.error);
+    }
+  } catch(e) {
+    alert('No se pudo conectar con Google Sheets.');
+  }
+}
+
+async function eliminarDocenteModal(idx) {
+  const d = docentesCache[idx];
+  if (!d) return;
+  if (!confirm(`¿Eliminar a ${d.nombre} de la agenda?`)) return;
+
+  try {
+    const res = await fetch(GAS_URL, { method:'POST', body: JSON.stringify({
+      clave: GAS_CLAVE, accion: 'eliminarDocente',
+      data: { nivel: d.nivel, nombre: d.nombre, dni: d.dni }
+    }) });
+    const json = await res.json();
+    if (json.ok) {
+      await cargarDocentesDelNivel();
+      renderListaDocentesModal();
+      setSyncStatus('ok', 'Docente eliminado ✓');
+    } else {
+      alert('Error al eliminar: ' + json.error);
+    }
+  } catch(e) {
+    alert('No se pudo conectar con Google Sheets.');
+  }
+}
+</script>
+
 </body>
 </html>
