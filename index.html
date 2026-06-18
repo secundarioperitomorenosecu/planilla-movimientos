@@ -837,16 +837,13 @@ async function exportXLS() {
   });
 
   const T = { style:'thin', color:{ argb:'FF000000' } };
-  const allB = { top:T, bottom:T, left:T, right:T };
 
   function sc(col, row, opts={}) {
     const cell = ws.getCell(row, col);
     if (opts.v !== undefined) cell.value = opts.v;
-    cell.font = { name:'Arial', size:opts.sz||10, bold:!!opts.b, color:{ argb:opts.fc||'FF000000' } };
-    cell.alignment = { horizontal:opts.h||'center', vertical:opts.va||'center', wrapText:!!opts.wrap };
-    if (opts.fill)   cell.fill   = { type:'pattern', pattern:'solid', fgColor:{ argb:opts.fill } };
+    cell.font = { name:'Arial', size:opts.sz||10, bold:!!opts.b, color:{ argb:'FF000000' } };
+    cell.alignment = { horizontal:opts.h||undefined, vertical:opts.va||undefined, wrapText:!!opts.wrap };
     if (opts.border) cell.border = opts.border;
-    if (opts.allB)   cell.border = allB;
     return cell;
   }
 
@@ -855,14 +852,9 @@ async function exportXLS() {
     return sc(c1,r1,opts);
   }
 
-  // Anchos columnas A-P
-  [8.43,4.0,20.1,3.66,3.0,15.44,3.33,3.43,3.43,3.55,9.55,7.33,3.33,3.43,8.43,19.1]
+  // Anchos columnas A-P (exactos del original)
+  [8.43,4.0,20.11,3.66,3.0,15.44,3.33,8.43,8.43,3.55,9.55,7.33,3.33,8.43,8.43,19.11]
     .forEach((w,i) => { ws.getColumn(i+1).width = w; });
-
-  // Alturas de fila
-  const alts = {4:13.8,5:12.75,6:12.75,7:12.75,8:16.5,9:21.75,10:16.5,11:30,
-                12:14.25,13:14.25,14:16.5,15:16.5,16:16.5,17:16.5};
-  Object.entries(alts).forEach(([r,h]) => { ws.getRow(Number(r)).height = h; });
 
   const areaLabel = {
     L:'LIQUIDACIONES', E:'LICENCIAS POR ENFERMEDAD',
@@ -876,117 +868,113 @@ async function exportXLS() {
   // FILA 4: Título
   mc(1,4,16,4, { v:'PLANILLA DE MOVIMIENTO.', b:true, sz:11, h:'center' });
 
-  // FILA 5: ALTAS|BAJAS + AREA con recuadro
-  mc(3,5,11,5, { v:'…………………………...……...ALTAS   |   BAJAS   |   MODIFICACIONES   |   ADICIONALES', sz:8, h:'center', va:'bottom' });
-  mc(13,5,16,6, { v:'AREA:   '+(areaLabel[base.area]||''), b:true, sz:10, h:'left', va:'center', allB:true });
+  // ═══ Generado automáticamente desde el análisis exacto del original ═══
+  mc(3,5,11,5, {v:'…………………………...……...ALTAS   |   BAJAS   |   MODIFICACIONES   |   ADICIONALES',sz:8,h:'center'});
+  mc(13,5,16,6, {v:'AREA: '+(areaLabel[base.area]||''),sz:10,b:true,h:'center',va:'center',wrap:true});
+  mc(5,6,11,6, {v:'………....(TACHAR LO QUE NO CORRESPONDA).',sz:6,h:'center',va:'top'});
+  sc(12,7, {v:'Mes/año:',sz:8,h:'right'});
+  sc(15,7, {sz:10,border:{bottom:T}});
+  sc(16,7, {v:mesAnio,sz:10,h:'left',border:{bottom:T}});
+  sc(1,8, {v:'Distrito:  '+(base.eDist||'').toUpperCase(),sz:10,h:'left'});
+  sc(5,8, {v:'N°',sz:10});
+  sc(6,8, {v:base.eCodDist||'069',sz:10,h:'left',border:{bottom:T}});
+  sc(1,9, {v:'     Establecimiento:',sz:10,h:'right',va:'center',border:{bottom:T}});
+  sc(2,9, {sz:10,h:'right',border:{bottom:T}});
+  mc(3,9,10,9, {v:base.eNom||'',sz:10,b:true,h:'left',va:'center',border:{bottom:T}});
+  sc(11,9, {v:'N°',sz:10,h:'right',va:'center'});
+  mc(12,9,14,9, {v:base.eNum||'',sz:10,h:'center',va:'center',border:{bottom:T}});
+  sc(15,9, {v:'Porcentaje:',sz:10,h:'right',va:'center'});
+  sc(16,9, {v:(base.eSubv||'')+'%',sz:10,h:'left',border:{bottom:T}});
+  mc(1,10,2,11, {v:'BAJAS y MODIFICACIONES. ',sz:10,b:true,h:'center',va:'justify',border:{top:T,bottom:T,left:T,right:T}});
+  mc(3,10,3,11, {v:'ALTAS,  BAJAS,  MODIFICACIONES y ADICIONALES.',sz:10,b:true,h:'center',va:'justify',border:{top:T,bottom:T,left:T,right:T}});
+  mc(4,10,6,11, {v:'ALTAS y ADICIONALES.',sz:10,b:true,h:'center',va:'center',wrap:true,border:{top:T,bottom:T,left:T,right:T}});
+  mc(7,10,14,11, {v:'ALTAS, MODIFICACIONES y ADICIONALES.',sz:10,b:true,h:'center',va:'center',wrap:true,border:{top:T,bottom:T,left:T,right:T}});
+  mc(15,10,16,11, {v:'ALTAS, BAJAS, MODIFICACIONES y ADICIONALES.',sz:10,b:true,h:'center',va:'justify',border:{top:T,bottom:T,left:T,right:T}});
+  mc(1,12,2,13, {v:'Según anterior planilla de haberes.',sz:10,h:'center',va:'justify',border:{top:T,bottom:T,left:T,right:T}});
+  mc(3,12,3,16, {v:'Apellido y Nombres.',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(4,12,4,16, {v:'Sit. Revista',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(5,12, {sz:10,border:{left:T}});
+  sc(6,12, {v:'DOCUMENTO',sz:10,border:{right:T}});
+  mc(7,12,7,16, {v:'FUNCION',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(8,12,8,16, {v:'RURAL',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(9,12,9,16, {v:'TURNO',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(10,12,10,16, {v:'CATEGORIA',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(11,12,11,16, {v:'IMPORTE.',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(12,12,12,16, {v:'N° HORAS',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(13,12,14,12, {v:'Antigüedad',sz:7,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(15,12,16,16, {v:'OBSERVACIONES.',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(5,13, {v:'1',sz:10,border:{left:T}});
+  sc(6,13, {v:'Lib. Enrolamiento',sz:10,border:{right:T}});
+  mc(13,13,13,16, {v:'AÑOS',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(14,13,14,16, {v:'MESES',sz:10,h:'center',va:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(1,14,1,16, {v:'…………………………………… Documento de Identidad. ………………………..……',sz:10,h:'center',va:'justify',border:{top:T,bottom:T,left:T,right:T}});
+  mc(2,14,2,16, {v:'.Cargo o. Secuencia',sz:9,h:'center',va:'justify',wrap:true,border:{top:T,bottom:T,left:T,right:T}});
+  sc(5,14, {v:'2',sz:10,border:{left:T}});
+  sc(6,14, {v:'Lib. Cívica.',sz:10,border:{right:T}});
+  sc(5,15, {v:'3',sz:10,border:{left:T}});
+  sc(6,15, {v:'Céd. Identidad.',sz:10,border:{right:T}});
+  sc(5,16, {v:'4',sz:10,border:{bottom:T,left:T}});
+  sc(6,16, {v:'D.N.I.',sz:10,border:{bottom:T,right:T}});
+  sc(1,17, {v:'1',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(2,17, {v:'2',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(3,17, {v:'3',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(4,17, {v:'4',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(5,17, {v:'5',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(6,17, {sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(7,17, {v:'6',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(8,17, {v:'7',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(9,17, {v:'8',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(10,17, {v:'9',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(11,17, {v:'10',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(12,17, {v:'11',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(13,17, {v:'12',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  sc(14,17, {v:'13',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
+  mc(15,17,16,17, {v:'14',sz:10,h:'center',border:{top:T,bottom:T,left:T,right:T}});
 
-  // FILA 6: Tachar
-  mc(5,6,11,6, { v:'………....(TACHAR LO QUE NO CORRESPONDA).', sz:6, h:'center', va:'top' });
-
-  // FILA 7: Mes/año
-  sc(12,7, { v:'Mes/año:', sz:8, h:'right', va:'bottom' });
-  mc(13,7,16,7, { v:mesAnio, sz:10, h:'left', va:'bottom', border:{ bottom:T } });
-
-  // FILA 8: Distrito / N°
-  mc(1,8,4,8, { v:'Distrito:   '+(base.eDist||''), sz:10, h:'left', va:'bottom', border:{ bottom:T } });
-  sc(5,8, { v:'N°', sz:10, h:'left', va:'bottom' });
-  sc(6,8, { v:base.eNum||'', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
-  mc(8,8,10,8, { v:'Región Nº', b:true, sz:13, h:'left', va:'bottom' });
-
-  // FILA 9: Establecimiento
-  sc(1,9, { v:'     Establecimiento:', sz:10, h:'right', va:'bottom', border:{ bottom:T } });
-  mc(2,9,10,9, { v:base.eNom||'', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
-  sc(11,9, { v:'N°', sz:10, h:'right', va:'bottom' });
-  mc(12,9,13,9, { v:base.eNum||'', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
-  sc(15,9, { v:'Porcentaje:', sz:10, h:'right', va:'bottom' });
-  sc(16,9, { v:(base.eSubv||'')+'%', sz:10, h:'left', va:'bottom', border:{ bottom:T } });
-
-  // FILAS 10-11: Encabezado tipo movimiento
-  mc(1,10,2,11,   { v:'BAJAS y MODIFICACIONES.', b:true, sz:10, h:'center', va:'justify', allB:true });
-  mc(3,10,3,11,   { v:'ALTAS,  BAJAS,  MODIFICACIONES y ADICIONALES.', b:true, sz:10, h:'center', va:'justify', allB:true });
-  mc(4,10,6,11,   { v:'ALTAS y ADICIONALES.', b:true, sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(7,10,14,11,  { v:'ALTAS, MODIFICACIONES y ADICIONALES.', b:true, sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(15,10,16,11, { v:'ALTAS, BAJAS, MODIFICACIONES y ADICIONALES.', b:true, sz:10, h:'center', va:'justify', allB:true });
-
-  // FILAS 12-16: Cabeceras
-  mc(1,12,2,13,   { v:'Según anterior planilla de haberes.', sz:10, h:'center', va:'justify', allB:true });
-  mc(1,14,1,16,   { v:'…………………………………… Documento de Identidad. ………………………..……', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(2,14,2,16,   { v:'.Cargo o. Secuencia', sz:9, h:'center', va:'center', wrap:true, allB:true });
-  mc(3,12,3,16,   { v:'Apellido y Nombres.', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(4,12,4,16,   { v:'Sit. Revista', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(5,12,6,12,   { v:'DOCUMENTO', sz:10, h:'center', va:'center', border:{ top:T, left:T, right:T } });
-  sc(5,13, { v:1, sz:10, border:{ left:T } });
-  sc(6,13, { v:'Lib. Enrolamiento', sz:10, h:'left', border:{ right:T } });
-  sc(5,14, { v:2, sz:10, border:{ left:T } });
-  sc(6,14, { v:'Lib. Cívica.', sz:10, h:'left', border:{ right:T } });
-  sc(5,15, { v:3, sz:10, border:{ left:T } });
-  sc(6,15, { v:'Céd. Identidad.', sz:10, h:'left', border:{ right:T } });
-  sc(5,16, { v:4, sz:10, border:{ left:T, bottom:T } });
-  sc(6,16, { v:'D.N.I.', sz:10, h:'left', border:{ right:T, bottom:T } });
-  mc(7,12,7,16,   { v:'FUNCION', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(8,12,8,16,   { v:'RURAL', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(9,12,9,16,   { v:'TURNO', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(10,12,10,16, { v:'CATEGORIA', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(11,12,11,16, { v:'IMPORTE.', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(12,12,12,16, { v:'N° HORAS', sz:10, h:'center', va:'center', wrap:true, allB:true });
-  mc(13,12,14,12, { v:'Antigüedad', sz:7, h:'center', va:'center', border:{ top:T, left:T, right:T } });
-  sc(13,13, { v:'AÑOS', sz:10, h:'center', allB:true });
-  mc(13,14,13,16, { v:'', allB:true });
-  sc(14,13, { v:'MESES', sz:10, h:'center', allB:true });
-  mc(14,14,14,16, { v:'', allB:true });
-  mc(15,12,16,16, { v:'OBSERVACIONES.', sz:10, h:'center', va:'center', wrap:true, allB:true });
-
-  // FILA 17: Números de columna
-  [[1,1],[2,2],[3,3],[4,4],[5,5],[7,6],[8,7],[9,8],[10,9],[11,10],[12,11],[13,12],[14,13]]
-    .forEach(([col,num]) => sc(col,17, { v:num, sz:10, h:'center', allB:true }));
-  mc(15,17,16,17, { v:14, sz:10, h:'center', allB:true });
-
-  // FILAS DE DATOS
+  // ─── FILAS DE DATOS (bloques de 2 filas por movimiento, empezando en fila 18) ───
   const movsData = movs.length > 0 ? movs : [{}];
-  let filaActual = 18;
+  let f1 = 18;
 
   movsData.forEach(mov => {
-    const f1 = filaActual, f2 = filaActual + 1;
-    ws.getRow(f1).height = 13.2;
-    ws.getRow(f2).height = 30.6;
-
-    // Extraer código de categoría (ej: "DS" de "DS — Docente secundario")
+    const f2 = f1 + 1;
     const catCod = (mov.dcCat||'').split(/[\s—-]/)[0].trim();
     const obs = mov._obs || mov.obs || '';
 
-    mc(1,f1,1,f2,   { v:mov.dcDni||'', sz:10, h:'center', va:'center', allB:true });
-    mc(2,f1,2,f2,   { v:mov.dcSec||'', sz:10, h:'center', va:'center', allB:true });
-    mc(3,f1,3,f2,   { v:mov.dcNom||'', sz:10, h:'left',   va:'center', allB:true });
-    mc(4,f1,4,f2,   { v:mov.dcRev||'', sz:10, h:'center', va:'center', allB:true });
-    mc(5,f1,5,f2,   { v:'4',           sz:10, h:'center', va:'center', allB:true }); // DNI
-    mc(6,f1,6,f2,   { v:mov.dcDni||'', sz:10, h:'center', va:'center', allB:true });
-    mc(7,f1,7,f2,   { v:catCod,        sz:10, h:'center', va:'center', allB:true });
-    mc(8,f1,8,f2,   { v:mov.rural||'', sz:10, h:'center', va:'center', allB:true });
-    mc(9,f1,9,f2,   { v:mov.dcTur||'', sz:10, h:'center', va:'center', allB:true });
-    mc(10,f1,10,f2, { v:catCod,        sz:10, h:'center', va:'center', allB:true });
-    mc(11,f1,11,f2, { v:'',            sz:10, h:'center', va:'center', allB:true });
-    mc(12,f1,12,f2, { v:mov.dcHst||mov.dcHs||'', sz:10, h:'center', va:'center', allB:true });
-    mc(13,f1,13,f2, { v:mov.dcAa||'', sz:10, h:'center', va:'center', allB:true });
-    mc(14,f1,14,f2, { v:mov.dcAm||'', sz:10, h:'center', va:'center', allB:true });
-    mc(15,f1,16,f2, { v:obs, sz:9, h:'left', va:'center', wrap:true, allB:true });
+    mc(1,f1,1,f2,  { v:mov.dcDni||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(2,f1,2,f2,  { v:mov.dcSec||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    sc(3,f1,    { sz:10, va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    sc(3,f2,    { v:mov.dcNom||'', sz:10, h:'right', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(4,f1,4,f2,  { v:mov.dcRev||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(5,f1,5,f2,  { v:'4', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(6,f1,6,f2,  { v:mov.dcDni||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(7,f1,7,f2,  { v:catCod, sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(8,f1,8,f2,  { v:mov.rural||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(9,f1,9,f2,  { v:mov.dcTur||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(10,f1,10,f2,{ v:catCod, sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(11,f1,11,f2,{ v:'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(12,f1,12,f2,{ v:mov.dcHst||mov.dcHs||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(13,f1,13,f2,{ v:mov.dcAa||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(14,f1,14,f2,{ v:mov.dcAm||'', sz:10, h:'center', va:'center', border:{top:T,bottom:T,left:T,right:T} });
+    mc(15,f1,16,f2,{ v:obs, sz:9, b:true, h:'left', va:'center', wrap:true, border:{top:T,bottom:T,left:T,right:T} });
 
-    filaActual += 2;
+    f1 += 2;
   });
 
-  // Lugar y fecha
-  const fLugar = filaActual + 1;
-  ws.getRow(fLugar).height = 16.5;
-  mc(1,fLugar,16,fLugar, { v:'Lugar y fecha: ', sz:10, h:'left', va:'center' });
+  // ─── Lugar y fecha (dinámico, después del último bloque de datos) ───
+  const fLugar = f1 + 1;
+  sc(1, fLugar, { v:'Lugar y fecha: ', sz:10 });
 
-  // Firmas
-  const fFirma = fLugar + 4;
-  ws.getRow(fFirma).height = 16.5;
-  mc(1,fFirma,2,fFirma,   { v:'Director/a.',                  sz:10, h:'center', allB:true });
-  mc(4,fFirma,6,fFirma,   { v:'Representante Legal.',          sz:10, h:'center', allB:true });
-  mc(9,fFirma,11,fFirma,  { v:'Inspector/a.',                  sz:10, h:'center', allB:true });
-  mc(15,fFirma,16,fFirma, { v:'Director/a Administrativo/a.', sz:10, h:'center', allB:true });
+  // ─── Firmas (4 filas más abajo del "Lugar y fecha") ───
+  const fFirmaLinea = fLugar + 4;
+  [1,2,4,5,6,9,10,11,15,16].forEach(col => sc(col, fFirmaLinea, { sz:10, border:{bottom:T} }));
 
-  // Exportar y guardar historial
+  const fFirma = fFirmaLinea + 1;
+  mc(1,fFirma,2,fFirma,   { v:'Director/a.', sz:10, h:'center' });
+  mc(4,fFirma,6,fFirma,   { v:'Representante Legal.', sz:10, h:'center', border:{top:T} });
+  mc(9,fFirma,11,fFirma,  { v:'Inspector/a.', sz:10, h:'center', border:{top:T} });
+  mc(15,fFirma,16,fFirma, { v:'Director/a Administrativo/a.', sz:10, h:'center', border:{top:T} });
+
+  // ─── Exportar ───
   guardarHistorialEnSheets();
   const buf  = await wb.xlsx.writeBuffer();
   const blob = new Blob([buf], { type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
@@ -997,85 +985,6 @@ async function exportXLS() {
   a.href = url; a.download = `PlanillaMovimientos_${nivel}_${mes}.xlsx`;
   a.click(); URL.revokeObjectURL(url);
 }
-
-function buildSheet(base, movs) {
-  const merges = [];
-  const rows = [];
-  const areaLabel = {L:'LIQUIDACIONES',E:'LICENCIAS POR ENFERMEDAD',A:'ASIGNACIONES FAMILIARES',C:'COORDINACIÓN ADMINISTRATIVA'};
-
-  function merge(r, c1, c2) { merges.push({s:{r,c:c1},e:{r,c:c2}}); }
-  function addRow(row) { rows.push(row); return rows.length - 1; }
-  function blank() { return new Array(14).fill(''); }
-  function full(txt) { const r = blank(); r[0] = txt; return r; }
-
-  // Encabezado
-  let ri;
-  ri = addRow(full('PROVINCIA DE BUENOS AIRES')); merge(ri,0,13);
-  ri = addRow(full('DIRECCIÓN GENERAL DE CULTURA Y EDUCACIÓN')); merge(ri,0,13);
-  ri = addRow(full('DIRECCIÓN PROVINCIAL DE EDUCACIÓN DE GESTIÓN PRIVADA')); merge(ri,0,13);
-  ri = addRow(full(`ÁREA: ${areaLabel[base.area] || 'LIQUIDACIONES'}`)); merge(ri,0,13);
-  ri = addRow(full('PLANILLA DE MOVIMIENTOS')); merge(ri,0,13);
-  addRow([]);
-
-  // Fila establecimiento
-  const rEst = [
-    `Establecimiento: ${base.eNom}`,'','','',
-    `N°: ${base.eNum}`,'',
-    `Distrito: ${base.eDist}`,'','',
-    `Nivel: ${base.eNivel}`,'',
-    `Mes/Año: ${base.eMes}`,'',''
-  ];
-  ri = addRow(rEst);
-  merge(ri,0,3); merge(ri,4,5); merge(ri,6,8); merge(ri,9,10); merge(ri,11,13);
-
-  const rDir = [`Director/a: ${base.dNom}`,'','','','','',`DNI: ${base.dDni}`,'','','','','','',''];
-  ri = addRow(rDir);
-  merge(ri,0,5); merge(ri,6,13);
-  addRow([]);
-
-  // Cabecera columnas
-  addRow([
-    'Col.1 APELLIDO Y NOMBRES','Col.2 D.N.I.','Col.3 CARGO/SEC.','Col.4 REV.',
-    'Col.5 CAT.','Col.6 CURSO','Col.7 TUR.','Col.8 MATERIA/ESPACIO',
-    'Col.9 HS','Col.10 FECHA DESDE/HASTA','Col.11 HS TOTAL',
-    'Col.12 ANTIG.A','Col.13 ANTIG.M','OBSERVACIONES'
-  ]);
-
-  // Movimientos
-  movs.forEach(m => {
-    const fechaRng = fFecha(m.mvDe) + (m.mvHs ? ` hasta ${fFecha(m.mvHs)}` : '');
-    addRow([
-      m.dcNom, m.dcDni, m.dcSec, m.dcRev,
-      m.dcCat, m.dcCur, m.dcTur, m.dcMat,
-      m.dcHs, fechaRng, m.dcHst,
-      m.dcAa, m.dcAm, m.obs
-    ]);
-  });
-
-  // Filas en blanco adicionales
-  for (let i = 0; i < 6; i++) addRow(blank());
-
-  addRow([]);
-
-  // Firmas
-  const rFirma = ['Firma y sello Director/a:','','','','','Firma y sello Inspector/a:','','','','','Firma Inspector/a Jefe (si corresponde):','','',''];
-  ri = addRow(rFirma); merge(ri,0,4); merge(ri,5,9); merge(ri,10,13);
-  const rLinea = ['_________________________','','','','','_________________________','','','','','_________________________','','',''];
-  ri = addRow(rLinea); merge(ri,0,4); merge(ri,5,9); merge(ri,10,13);
-
-  addRow([]);
-  ri = addRow(full(`Fecha de confección: ${new Date().toLocaleDateString('es-AR')}`)); merge(ri,0,13);
-
-  return { data: rows, merges };
-}
-
-// ══════════════════════════════════════════
-// INIT
-// ══════════════════════════════════════════
-document.getElementById('e-mes').value = new Date().toISOString().slice(0,7);
-
-// ── AGENDA DE DOCENTES (autocompletado con antigüedad dinámica) ────────────────
-let docentesCache = [];
 
 async function cargarDocentesDelNivel() {
   const nivel = document.getElementById('e-nivel')?.value;
