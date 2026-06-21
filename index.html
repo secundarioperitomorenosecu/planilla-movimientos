@@ -1218,9 +1218,11 @@ async function cargarDocentesDelNivel() {
     setSyncStatus('info', 'Seleccioná el mes/año para calcular la antigüedad correcta');
     return;
   }
+  // Convertir 2026-06 -> 06/2026
+  const partesMes = mesInput.split('-');
+  const mesAnio = partesMes[1] + '/' + partesMes[0]; // '06/2026'
+  console.log('Cargando docentes — nivel:', nivel, 'mesAnio:', mesAnio);
   try {
-    const mesInput = document.getElementById('e-mes')?.value || '';
-  const mesAnio = mesInput ? mesInput.split('-').reverse().join('/').replace(/^(\d{2})\/(\d{4})$/, '$1/$2') : '';
   const res = await fetch(`${GAS_URL}?clave=${GAS_CLAVE}&accion=leerDocentes&nivel=${encodeURIComponent(nivel)}&mesAnio=${encodeURIComponent(mesAnio)}`);
     const json = await res.json();
     if (json.ok) {
