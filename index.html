@@ -61,6 +61,34 @@ function limpiarSecsExtra() {
   if (cont) cont.innerHTML = '';
 }
 
+
+// ── CÁLCULO DE ANTIGÜEDAD EN EL CLIENTE ────────────────────────────────────────
+function pad2(n) {
+  n = Math.max(0, Math.round(Number(n) || 0));
+  return n < 10 ? '0'+n : String(n);
+}
+
+function calcularAntiguedadCliente(anosRef, mesesRef, refMesAnio, objMesAnio) {
+  // refMesAnio y objMesAnio en formato MM/AAAA
+  if (!refMesAnio || !objMesAnio) return { anos: pad2(anosRef), meses: pad2(mesesRef) };
+  const [refM, refA] = refMesAnio.split('/').map(Number);
+  const [objM, objA] = objMesAnio.split('/').map(Number);
+  const totalRef = refA * 12 + (refM - 1);
+  const totalObj = objA * 12 + (objM - 1);
+  const dif = totalObj - totalRef;
+  let total = (Number(anosRef)||0) * 12 + (Number(mesesRef)||0) + dif;
+  if (total < 0) total = 0;
+  return { anos: pad2(Math.floor(total/12)), meses: pad2(total%12) };
+}
+
+function getMesAnioActual() {
+  // Lee el campo e-mes (formato YYYY-MM) y lo convierte a MM/YYYY
+  const v = document.getElementById('e-mes')?.value || '';
+  if (!v) return '';
+  const [anio, mes] = v.split('-');
+  return mes + '/' + anio; // '06/2026'
+}
+
 </script>
 <style>
 :root {
@@ -1257,8 +1285,15 @@ function onDocenteInput() {
     const revVal = revMap[doc.revista] || '';
     if (revVal) selRev.value = revVal;
   }
-  set('dc-aa', doc.antiguedadAnos);
-  set('dc-am', doc.antiguedadMeses);
+  // Calcular antigüedad localmente según el mes de la novedad
+  const mesActual = getMesAnioActual();
+  const antig = calcularAntiguedadCliente(
+    doc.antiguedadAnos, doc.antiguedadMeses,
+    doc.mesAnioRef || '05/2026',
+    mesActual
+  );
+  set('dc-aa', antig.anos);
+  set('dc-am', antig.meses);
   if (typeof actualizarObsPreview === 'function') actualizarObsPreview();
 }
 
