@@ -1285,15 +1285,27 @@ function onDocenteInput() {
     const revVal = revMap[doc.revista] || '';
     if (revVal) selRev.value = revVal;
   }
-  // Calcular antigüedad localmente según el mes de la novedad
-  const mesActual = getMesAnioActual();
-  const antig = calcularAntiguedadCliente(
-    doc.antiguedadAnos, doc.antiguedadMeses,
-    doc.mesAnioRef || '05/2026',
-    mesActual
-  );
-  set('dc-aa', antig.anos);
-  set('dc-am', antig.meses);
+  // Leer el mes directamente del DOM sin función auxiliar
+  const eMesEl = document.getElementById('e-mes');
+  const eMesVal = eMesEl ? eMesEl.value : '';
+  let aaVal, amVal;
+  if (eMesVal) {
+    const pts = eMesVal.split('-'); // ['2026','06']
+    const mesAnioObj = pts[1] + '/' + pts[0]; // '06/2026'
+    const ref = doc.mesAnioRef || '05/2026';
+    const antig = calcularAntiguedadCliente(
+      Number(doc.antiguedadAnos) || 0,
+      Number(doc.antiguedadMeses) || 0,
+      ref, mesAnioObj
+    );
+    aaVal = antig.anos;
+    amVal = antig.meses;
+  } else {
+    aaVal = pad2(Number(doc.antiguedadAnos) || 0);
+    amVal = pad2(Number(doc.antiguedadMeses) || 0);
+  }
+  set('dc-aa', aaVal);
+  set('dc-am', amVal);
   if (typeof actualizarObsPreview === 'function') actualizarObsPreview();
 }
 
