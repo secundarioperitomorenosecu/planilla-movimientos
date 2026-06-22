@@ -344,7 +344,7 @@ textarea{resize:vertical;min-height:70px}
     <div class="ctit">Identificación</div>
     <div class="g3">
       <div class="campo s2"><label>Apellido y Nombres <span class="req">*</span> <span class="ncol">Col.1</span></label>
-        <input id="dc-nom" list="lista-docentes" placeholder="Empezá a escribir para buscar..." autocomplete="off" oninput="onDocenteInput()">
+        <input id="dc-nom" list="lista-docentes" placeholder="Empezá a escribir para buscar..." autocomplete="off" oninput="onDocenteInput()" onchange="onDocenteInput()">
         <datalist id="lista-docentes"></datalist>
       </div>
       <div class="campo"><label>DNI <span class="req">*</span> <span class="ncol">Col.2</span></label><input id="dc-dni" placeholder="Ej: 28.345.678"></div>
@@ -1266,17 +1266,25 @@ async function cargarDocentesDelNivel() {
 }
 
 function onDocenteInput() {
-  const valor = document.getElementById('dc-nom')?.value || '';
-  const doc = docentesCache.find(d => d.nombre === valor);
-  if (!doc) return;
+  const valor = (document.getElementById('dc-nom')?.value || '').trim().toUpperCase();
+  if (!valor) return;
+  const doc = docentesCache.find(d => (d.nombre||'').trim().toUpperCase() === valor);
+  if (!doc) {
+    // Intento parcial: si hay un solo match con startsWith
+    const parcial = docentesCache.filter(d => (d.nombre||'').trim().toUpperCase().startsWith(valor));
+    if (parcial.length !== 1) return;
+    // Solo si hay exactamente uno
+  }
+  const docFinal = doc || docentesCache.find(d => (d.nombre||'').trim().toUpperCase().startsWith(valor));
+  if (!docFinal) return;
 
   const set = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
-  set('dc-dni', doc.dni);
-  set('dc-sec', doc.secuencia);
+  set('dc-dni', docFinal.dni);
+  set('dc-sec', docFinal.secuencia);
   const selCat = document.getElementById('dc-cat');
   if (selCat) {
     for (const opt of selCat.options) {
-      if (opt.value.split(/[\s—-]/)[0] === doc.categoria) { selCat.value = opt.value; break; }
+      if (opt.value.split(/[\s—-]/)[0] === docFinal.categoria) { selCat.value = opt.value; break; }
     }
   }
   const selRev = document.getElementById('dc-rev');
@@ -1297,10 +1305,10 @@ function onDocenteInput() {
     const hoy = new Date();
     mesAnioObj = String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear();
   }
-  const ref = doc.mesAnioRef || '05/2026';
+  const ref = docFinal.mesAnioRef || '05/2026';
   const antig = calcularAntiguedadCliente(
-    Number(doc.antiguedadAnos) || 0,
-    Number(doc.antiguedadMeses) || 0,
+    Number(docFinal.antiguedadAnos) || 0,
+    Number(docFinal.antiguedadMeses) || 0,
     ref, mesAnioObj
   );
   set('dc-aa', antig.anos);
