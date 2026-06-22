@@ -62,33 +62,6 @@ function limpiarSecsExtra() {
 }
 
 
-// ── CÁLCULO DE ANTIGÜEDAD EN EL CLIENTE ────────────────────────────────────────
-function pad2(n) {
-  n = Math.max(0, Math.round(Number(n) || 0));
-  return n < 10 ? '0'+n : String(n);
-}
-
-function calcularAntiguedadCliente(anosRef, mesesRef, refMesAnio, objMesAnio) {
-  // refMesAnio y objMesAnio en formato MM/AAAA
-  if (!refMesAnio || !objMesAnio) return { anos: pad2(anosRef), meses: pad2(mesesRef) };
-  const [refM, refA] = refMesAnio.split('/').map(Number);
-  const [objM, objA] = objMesAnio.split('/').map(Number);
-  const totalRef = refA * 12 + (refM - 1);
-  const totalObj = objA * 12 + (objM - 1);
-  const dif = totalObj - totalRef;
-  let total = (Number(anosRef)||0) * 12 + (Number(mesesRef)||0) + dif;
-  if (total < 0) total = 0;
-  return { anos: pad2(Math.floor(total/12)), meses: pad2(total%12) };
-}
-
-function getMesAnioActual() {
-  // Lee el campo e-mes (formato YYYY-MM) y lo convierte a MM/YYYY
-  const v = document.getElementById('e-mes')?.value || '';
-  if (!v) return '';
-  const [anio, mes] = v.split('-');
-  return mes + '/' + anio; // '06/2026'
-}
-
 </script>
 <style>
 :root {
@@ -510,6 +483,26 @@ textarea{resize:vertical;min-height:70px}
 </div>
 
 <script>
+
+// ── CÁLCULO DE ANTIGÜEDAD EN EL CLIENTE ─────────────────────────────────────
+function pad2(n) {
+  n = Math.max(0, Math.round(Number(n) || 0));
+  return n < 10 ? '0'+n : String(n);
+}
+
+function calcularAntiguedadCliente(anosRef, mesesRef, refMesAnio, objMesAnio) {
+  if (!refMesAnio || !objMesAnio) return { anos: pad2(anosRef), meses: pad2(mesesRef) };
+  const [refM, refA] = refMesAnio.split('/').map(Number);
+  const [objM, objA] = objMesAnio.split('/').map(Number);
+  const totalRef = refA * 12 + (refM - 1);
+  const totalObj = objA * 12 + (objM - 1);
+  const dif = totalObj - totalRef;
+  let total = (Number(anosRef)||0) * 12 + (Number(mesesRef)||0) + dif;
+  if (total < 0) total = 0;
+  return { anos: pad2(Math.floor(total/12)), meses: pad2(total%12) };
+}
+
+
 // ── INTEGRACIÓN GOOGLE SHEETS ────────────────────────────────
 const GAS_URL   = "https://script.google.com/macros/s/AKfycbytfDrG2wjquj6-m-JraK817sAqYHk-3DnuJWWTaSFZXyvZC7b0LUrWddV1OxC5zci_/exec";
 const GAS_CLAVE = "dipregep2025";
@@ -1539,4 +1532,9 @@ function onReemplazadoInput() {
 </script>
 
 </body>
-</html>
+</html>function pad2(n) {
+  n = Math.max(0, Math.round(Number(n) || 0));
+  return n < 10 ? '0'+n : String(n);
+}
+
+
