@@ -1285,27 +1285,26 @@ function onDocenteInput() {
     const revVal = revMap[doc.revista] || '';
     if (revVal) selRev.value = revVal;
   }
-  // Leer el mes directamente del DOM sin función auxiliar
+  // Leer el mes directamente del DOM
   const eMesEl = document.getElementById('e-mes');
   const eMesVal = eMesEl ? eMesEl.value : '';
-  let aaVal, amVal;
+  // Si no hay mes elegido, usar el mes actual del sistema
+  let mesAnioObj;
   if (eMesVal) {
-    const pts = eMesVal.split('-'); // ['2026','06']
-    const mesAnioObj = pts[1] + '/' + pts[0]; // '06/2026'
-    const ref = doc.mesAnioRef || '05/2026';
-    const antig = calcularAntiguedadCliente(
-      Number(doc.antiguedadAnos) || 0,
-      Number(doc.antiguedadMeses) || 0,
-      ref, mesAnioObj
-    );
-    aaVal = antig.anos;
-    amVal = antig.meses;
+    const pts = eMesVal.split('-');
+    mesAnioObj = pts[1] + '/' + pts[0]; // '06/2026'
   } else {
-    aaVal = pad2(Number(doc.antiguedadAnos) || 0);
-    amVal = pad2(Number(doc.antiguedadMeses) || 0);
+    const hoy = new Date();
+    mesAnioObj = String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear();
   }
-  set('dc-aa', aaVal);
-  set('dc-am', amVal);
+  const ref = doc.mesAnioRef || '05/2026';
+  const antig = calcularAntiguedadCliente(
+    Number(doc.antiguedadAnos) || 0,
+    Number(doc.antiguedadMeses) || 0,
+    ref, mesAnioObj
+  );
+  set('dc-aa', antig.anos);
+  set('dc-am', antig.meses);
   if (typeof actualizarObsPreview === 'function') actualizarObsPreview();
 }
 
