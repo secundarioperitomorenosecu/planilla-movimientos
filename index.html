@@ -7,59 +7,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js">
 // ── SECUENCIAS ADICIONALES DEL TITULAR ────────────────────────────────────────
-let secsExtra = []; // [{sec, turno}]
 
-function agregarSecuenciaExtra() {
-  const idx = secsExtra.length;
-  secsExtra.push({ sec:'', turno:'' });
-
-  const cont = document.getElementById('secs-extra-container');
-  const div = document.createElement('div');
-  div.id = `sec-extra-${idx}`;
-  div.style.cssText = 'border:1px solid #e2e8f0;border-radius:7px;padding:12px;margin-top:8px;background:#f8fafc';
-  div.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <strong style="font-size:13px;color:#1a3a5c">Secuencia adicional ${idx+1}</strong>
-      <button type="button" onclick="eliminarSecuenciaExtra(${idx})"
-        style="border:none;background:none;color:#c53030;cursor:pointer;font-size:18px">×</button>
-    </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-      <div class="campo">
-        <label>N° Secuencia del titular</label>
-        <input id="sec-extra-sec-${idx}" placeholder="Ej: 027"
-          oninput="secsExtra[${idx}].sec=this.value">
-      </div>
-      <div class="campo">
-        <label>Turno</label>
-        <select id="sec-extra-tur-${idx}" onchange="secsExtra[${idx}].turno=this.value">
-          <option value="">— Turno —</option>
-          <option value="M">M — Mañana</option>
-          <option value="T">T — Tarde</option>
-          <option value="V">V — Vespertino</option>
-          <option value="N">N — Noche</option>
-          <option value="X">X — Único</option>
-        </select>
-      </div>
-    </div>`;
-  cont.appendChild(div);
-}
-
-function eliminarSecuenciaExtra(idx) {
-  secsExtra[idx] = null;
-  const el = document.getElementById(`sec-extra-${idx}`);
-  if (el) el.remove();
-}
-
-function getSecsExtra() {
-  return secsExtra.filter(s => s && s.sec);
-}
-
-// Limpiar al cambiar tipo de movimiento
-function limpiarSecsExtra() {
-  secsExtra = [];
-  const cont = document.getElementById('secs-extra-container');
-  if (cont) cont.innerHTML = '';
-}
 
 
 </script>
@@ -1283,7 +1231,7 @@ function onDocenteInput() {
   const selRev = document.getElementById('dc-rev');
   if (selRev) {
     const revMap = { 'Titular':'1.1', 'Provisorio':'P', 'Suplente':'2.1' };
-    const revVal = revMap[doc.revista] || '';
+    const revVal = revMap[docFinal.revista] || '';
     if (revVal) selRev.value = revVal;
   }
   // Leer el mes directamente del DOM
@@ -1307,6 +1255,62 @@ function onDocenteInput() {
   set('dc-aa', antig.anos);
   set('dc-am', antig.meses);
   if (typeof actualizarObsPreview === 'function') actualizarObsPreview();
+}
+
+
+
+let secsExtra = []; // [{sec, turno}]
+
+function agregarSecuenciaExtra() {
+  const idx = secsExtra.length;
+  secsExtra.push({ sec:'', turno:'' });
+
+  const cont = document.getElementById('secs-extra-container');
+  const div = document.createElement('div');
+  div.id = `sec-extra-${idx}`;
+  div.style.cssText = 'border:1px solid #e2e8f0;border-radius:7px;padding:12px;margin-top:8px;background:#f8fafc';
+  div.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong style="font-size:13px;color:#1a3a5c">Secuencia adicional ${idx+1}</strong>
+      <button type="button" onclick="eliminarSecuenciaExtra(${idx})"
+        style="border:none;background:none;color:#c53030;cursor:pointer;font-size:18px">×</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="campo">
+        <label>N° Secuencia del titular</label>
+        <input id="sec-extra-sec-${idx}" placeholder="Ej: 027"
+          oninput="secsExtra[${idx}].sec=this.value">
+      </div>
+      <div class="campo">
+        <label>Turno</label>
+        <select id="sec-extra-tur-${idx}" onchange="secsExtra[${idx}].turno=this.value">
+          <option value="">— Turno —</option>
+          <option value="M">M — Mañana</option>
+          <option value="T">T — Tarde</option>
+          <option value="V">V — Vespertino</option>
+          <option value="N">N — Noche</option>
+          <option value="X">X — Único</option>
+        </select>
+      </div>
+    </div>`;
+  cont.appendChild(div);
+}
+
+function eliminarSecuenciaExtra(idx) {
+  secsExtra[idx] = null;
+  const el = document.getElementById(`sec-extra-${idx}`);
+  if (el) el.remove();
+}
+
+function getSecsExtra() {
+  return secsExtra.filter(s => s && s.sec);
+}
+
+// Limpiar al cambiar tipo de movimiento
+function limpiarSecsExtra() {
+  secsExtra = [];
+  const cont = document.getElementById('secs-extra-container');
+  if (cont) cont.innerHTML = '';
 }
 
 </script>
