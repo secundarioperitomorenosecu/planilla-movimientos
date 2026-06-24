@@ -916,7 +916,7 @@ async function exportXLS() {
 
   // Anchos columnas A-P (exactos del original)
   // Anchos ajustados para A4 apaisado
-  [9.02,4.28,21.52,3.92,3.21,16.52,3.56,9.02,9.02,3.80,10.22,7.84,3.56,9.02,9.02,20.45]
+  [8.5, 4.0, 22.0, 3.7, 3.0, 16.0, 3.4, 7.5, 7.5, 3.6, 9.5,  7.5, 3.4, 7.0, 7.0, 28.0]
     .forEach((w,i) => { ws.getColumn(i+1).width = w; });
 
   const areaLabel = {
@@ -936,10 +936,15 @@ async function exportXLS() {
     ext: { width: 350, height: 45 }
   });
 
-  // FILAS 1-3: Encabezado institucional (izquierda + logo derecha)
+  // Alturas filas 1-3 (para el logo)
+  ws.getRow(1).height = 16;
+  ws.getRow(2).height = 16;
+  ws.getRow(3).height = 16;
+
+  // FILAS 1-3: Solo texto izquierda, logo va sobre las celdas derechas (sin texto detrás)
   mc(1,1,7,3, { v:'PROVINCIA DE BUENOS AIRES.\nDirección General de Cultura y Educación.\nDirección Provincial de Educación de Gestión Privada.', sz:9, h:'left', va:'top', wrap:true });
-  // Espacio para el logo (imagen se agrega manualmente o con base64)
-  mc(8,1,16,3, { v:'Dirección General de\nCultura y Educación\n\nBuenos Aires\nLA PROVINCIA', sz:11, b:true, h:'center', va:'center', wrap:true });
+  // Celdas derechas vacías — el logo se superpone sobre ellas
+  mc(8,1,16,3, { v:'', sz:9 });
 
   // FILA 4: Título
   mc(1,4,16,4, { v:'PLANILLA DE MOVIMIENTO.', b:true, sz:11, h:'center' });
