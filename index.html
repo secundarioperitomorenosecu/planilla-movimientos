@@ -1246,7 +1246,13 @@ function onDocenteInput() {
     const hoy = new Date();
     mesAnioObj = String(hoy.getMonth()+1).padStart(2,'0') + '/' + hoy.getFullYear();
   }
-  const ref = docFinal.mesAnioRef || '05/2026';
+  // Normalizar mesAnioRef: puede venir como "2026-05-01T..." o "05/2026"
+  let ref = docFinal.mesAnioRef || '05/2026';
+  if (ref.includes('T') || ref.includes('-')) {
+    // Formato ISO: extraer mes y año directamente del string sin usar Date()
+    const partes = ref.split('T')[0].split('-'); // ['2026','05','01']
+    ref = partes[1] + '/' + partes[0]; // '05/2026'
+  }
   const antig = calcularAntiguedadCliente(
     Number(docFinal.antiguedadAnos) || 0,
     Number(docFinal.antiguedadMeses) || 0,
